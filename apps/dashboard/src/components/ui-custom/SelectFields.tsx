@@ -39,7 +39,6 @@ export const SelectField = ({
   hasNext,
   onLoadMore,
   isLoading,
-  showDefault = true,
 }: SelectFieldProps) => {
   return (
     <FormField
@@ -55,10 +54,7 @@ export const SelectField = ({
               {Icon && (
                 <Icon className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground pointer-events-none" />
               )}
-              <Select
-                onValueChange={field.onChange}
-                defaultValue={showDefault ? field.value : undefined}
-              >
+              <Select onValueChange={field.onChange} value={field.value}>
                 <SelectTrigger
                   affiliate={affiliate}
                   className={`w-full border ${Icon ? "pl-10" : ""}`}

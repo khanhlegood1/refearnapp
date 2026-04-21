@@ -14,6 +14,8 @@ import CheckEmail from "@/components/pages/CheckEmail"
 import PendingState from "@/components/ui-custom/PendingState"
 import ErrorState from "@/components/ui-custom/ErrorState"
 import { DomainHeader } from "@/components/ui-custom/DomainHeader"
+import PendingApproval from "@/components/pages/PendingApproval"
+import InvalidInvite from "@/components/pages/InvalidInvite"
 interface AuthCustomizationProps {
   setMainTab?: (tab: string) => void
   orgId: string
@@ -40,6 +42,8 @@ export const AuthCustomization = ({
     "check-email": "/check-email",
     "splash-loading": "/",
     "splash-error": "/",
+    "pending-approval": "/pending-approval",
+    "invalid-invite": "/invalid-invite",
   }
   const [errorCycle, setErrorCycle] = useState<"loading" | "error">("error")
 
@@ -63,6 +67,8 @@ export const AuthCustomization = ({
           <TabsTrigger value="check-email">Check Email</TabsTrigger>
           <TabsTrigger value="splash-loading">Splash Loading</TabsTrigger>
           <TabsTrigger value="splash-error">Splash Error</TabsTrigger>
+          <TabsTrigger value="pending-approval">Pending Approval</TabsTrigger>
+          <TabsTrigger value="invalid-invite">Invalid Invite</TabsTrigger>
         </TabsList>
         <TabsContent value="login">
           <Login
@@ -125,6 +131,12 @@ export const AuthCustomization = ({
           ) : (
             <ErrorState affiliate isPreview onRetry={handleRetry} />
           )}
+        </TabsContent>
+        <TabsContent value="pending-approval">
+          <PendingApproval orgId={orgId} affiliate isPreview plan={plan} />
+        </TabsContent>
+        <TabsContent value="invalid-invite">
+          <InvalidInvite orgId={orgId} affiliate isPreview plan={plan} />
         </TabsContent>
       </Tabs>
     </div>

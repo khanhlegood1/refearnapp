@@ -96,6 +96,7 @@ export const CreateOrganization = async (
     }
     const commissionTypeMapped =
       input.commissionType === "fixed" ? "FLAT_FEE" : "PERCENTAGE"
+    const isPrivate = input.programType !== "open"
     const [newOrg] = await db
       .insert(organization)
       .values({
@@ -105,6 +106,8 @@ export const CreateOrganization = async (
         commissionType: commissionTypeMapped,
         userId: decoded.id,
         logoUrl: input.logoUrl || null,
+        programType: input.programType,
+        isPrivate: isPrivate,
       })
       .returning()
 

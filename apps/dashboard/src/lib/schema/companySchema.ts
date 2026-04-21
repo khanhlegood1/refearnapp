@@ -25,6 +25,9 @@ export const companySchema = (
       commissionDurationValue: z.coerce.number().min(1),
       commissionDurationUnit: z.enum(["day", "week", "month", "year"]),
       currency: z.enum(["USD", "EUR", "GBP", "CAD", "AUD"]),
+      programType: z
+        .enum(["open", "invite_only", "application"])
+        .default("open"),
       defaultDomain: z.union([subdomainSchema, hostnameSchema]),
     })
     .refine(() => domainType === null || domainType === "platform", {
