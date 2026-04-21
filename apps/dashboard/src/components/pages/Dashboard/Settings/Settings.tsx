@@ -1,12 +1,6 @@
 "use client"
 
-import {
-  Card,
-  CardHeader,
-  CardContent,
-  CardTitle,
-  CardFooter,
-} from "@/components/ui/card"
+import { Card, CardHeader, CardContent, CardTitle } from "@/components/ui/card"
 import deepEqual from "fast-deep-equal"
 import { useForm } from "react-hook-form"
 import { Form } from "@/components/ui/form"
@@ -24,12 +18,16 @@ import {
   History,
   Target,
   Loader2,
+  Lock,
+  Users,
+  DollarSign,
+  FileText,
 } from "lucide-react"
 import { z } from "zod"
 
 import { updateOrgSettings } from "@/app/(organization)/organization/[orgId]/dashboard/settings/action"
 import { orgSettingsSchema } from "@/lib/schema/orgSettingSchema"
-import React, { useMemo } from "react"
+import React, { useEffect, useMemo } from "react"
 import { InputField, TextareaField } from "@/components/Auth/FormFields"
 import { SelectField } from "@/components/ui-custom/SelectFields"
 import { LogoUpload } from "@/components/ui-custom/LogoUpload"
@@ -48,38 +46,61 @@ export default function Settings({
   isTeam = false,
 }: Props & { isTeam?: boolean }) {
   useVerifyTeamSession(orgData.id, isTeam)
-  const safeDefaults: OrgFormData = {
-    id: orgData?.id ?? "",
-    name: orgData?.name ?? "",
-    websiteUrl: orgData?.websiteUrl ?? "",
-    logoUrl: orgData?.logoUrl ?? null,
-    description: orgData?.description ?? "",
-    openGraphUrl: orgData?.openGraphUrl ?? "",
-    referralParam: (orgData?.referralParam as "ref" | "via" | "aff") ?? "ref",
-    cookieLifetimeValue: String(orgData?.cookieLifetimeValue ?? "30"),
-    cookieLifetimeUnit:
-      (orgData?.cookieLifetimeUnit as "day" | "week" | "month" | "year") ??
-      "day",
-    commissionType:
-      (orgData?.commissionType?.toUpperCase() as "PERCENTAGE" | "FLAT_FEE") ??
-      "PERCENTAGE",
-    commissionValue: String(Number(orgData.commissionValue ?? 0)),
-    commissionDurationValue: String(orgData?.commissionDurationValue ?? "30"),
-    commissionDurationUnit:
-      (orgData?.commissionDurationUnit as "day" | "week" | "month" | "year") ??
-      "day",
-    currency:
-      (orgData?.currency as "USD" | "EUR" | "GBP" | "CAD" | "AUD") ?? "USD",
-    supportEmail: orgData?.supportEmail ?? "",
-    attributionModel:
-      (orgData?.attributionModel as "FIRST_CLICK" | "LAST_CLICK") ??
-      "LAST_CLICK",
-  }
+  const safeDefaults: OrgFormData = useMemo(
+    () => ({
+      id: orgData?.id ?? "",
+      name: orgData?.name ?? "",
+      websiteUrl: orgData?.websiteUrl ?? "",
+      logoUrl: orgData?.logoUrl ?? null,
+      description: orgData?.description ?? "",
+      openGraphUrl: orgData?.openGraphUrl ?? "",
+      referralParam: (orgData?.referralParam as "ref" | "via" | "aff") ?? "ref",
+      cookieLifetimeValue: String(orgData?.cookieLifetimeValue ?? "30"),
+      cookieLifetimeUnit:
+        (orgData?.cookieLifetimeUnit as "day" | "week" | "month" | "year") ??
+        "day",
+      commissionType:
+        (orgData?.commissionType?.toUpperCase() as "PERCENTAGE" | "FLAT_FEE") ??
+        "PERCENTAGE",
+      commissionValue: String(Number(orgData.commissionValue ?? 0)),
+      commissionDurationValue: String(orgData?.commissionDurationValue ?? "30"),
+      commissionDurationUnit:
+        (orgData?.commissionDurationUnit as
+          | "day"
+          | "week"
+          | "month"
+          | "year") ?? "day",
+      currency:
+        (orgData?.currency as "USD" | "EUR" | "GBP" | "CAD" | "AUD") ?? "USD",
+      supportEmail: orgData?.supportEmail ?? "",
+      attributionModel:
+        (orgData?.attributionModel as "FIRST_CLICK" | "LAST_CLICK") ??
+        "LAST_CLICK",
+      isPrivate: orgData?.isPrivate ?? false,
+      programType:
+        (orgData?.programType as "open" | "invite_only" | "application") ??
+        "open",
+      minimumPayoutThreshold: String(
+        Number(orgData?.minimumPayoutThreshold ?? 0)
+      ),
+      tosUrl: orgData?.tosUrl ?? "",
+      holdPeriodDays: String(orgData?.holdPeriodDays ?? 45),
+    }),
+    [orgData]
+  )
 
   const form = useForm<OrgFormData>({
     resolver: zodResolver(orgSettingsSchema),
     defaultValues: safeDefaults,
   })
+  useEffect(() => {
+    const subscription = form.watch((value, { name }) => {
+      if (name === "programType") {
+        form.setValue("isPrivate", value.programType !== "open")
+      }
+    })
+    return () => subscription.unsubscribe()
+  }, [form])
   const currentValues = form.watch()
   const updateFn = isTeam ? updateTeamOrgSettings : updateOrgSettings
   const mut = useAppMutation<MutationData, Partial<OrgData> & { id: string }>(
@@ -127,6 +148,44 @@ export default function Settings({
       {/* Settings Form */}
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+          <div className="fixed top-4 left-0 right-0 z-50 flex justify-end mb-6">
+            <div className="bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border rounded-xl p-3 shadow-lg flex items-center gap-4 px-6 min-w-[320px]">
+              <div className="flex-1">
+                <p className="text-xs font-medium text-muted-foreground">
+                  {form.formState.isDirty
+                    ? "You have unsaved changes"
+                    : "Settings are up to date"}
+                </p>
+              </div>
+              <div className="flex gap-2">
+                {form.formState.isDirty && (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => {
+                      form.reset(safeDefaults)
+                    }}
+                  >
+                    Reset
+                  </Button>
+                )}
+                <Button
+                  type="submit"
+                  size="sm"
+                  disabled={mut.isPending || isFormUnchanged}
+                  className="min-w-[120px]"
+                >
+                  {mut.isPending ? (
+                    <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                  ) : (
+                    <FileText className="w-4 h-4 mr-2" />
+                  )}
+                  Save Changes
+                </Button>
+              </div>
+            </div>
+          </div>
           <Card>
             <CardHeader>
               <CardTitle>Basic Information</CardTitle>
@@ -288,6 +347,24 @@ export default function Settings({
                     }
                     affiliate={false}
                   />
+                  <InputField
+                    control={form.control}
+                    name="holdPeriodDays"
+                    label="Hold Period (Days)"
+                    placeholder="Hold Period (Days)"
+                    type="number"
+                    icon={Clock}
+                    affiliate={false}
+                  />
+                  <InputField
+                    control={form.control}
+                    name="minimumPayoutThreshold"
+                    label="Min Payout Threshold"
+                    placeholder="Minimum Payout Threshold"
+                    type="number"
+                    icon={DollarSign}
+                    affiliate={false}
+                  />
                 </div>
               </FormSection>
               <FormSection title="Commission Duration" borderTop borderBottom>
@@ -334,15 +411,58 @@ export default function Settings({
                   affiliate={false}
                 />
               </div>
+              <FormSection title="Legal & TOS" borderTop>
+                <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+                  <InputField
+                    control={form.control}
+                    name="tosUrl"
+                    label="Terms of Service URL"
+                    placeholder="https://..."
+                    type="text"
+                    icon={FileText}
+                    affiliate={false}
+                  />
+                </div>
+              </FormSection>
             </CardContent>
-            <CardFooter className="flex justify-end">
-              <Button type="submit" disabled={mut.isPending || isFormUnchanged}>
-                {mut.isPending && (
-                  <Loader2 className="w-4 h-4 animate-spin mr-2" />
-                )}
-                Save Changes
-              </Button>
-            </CardFooter>
+          </Card>
+
+          {/* Program Access */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Program Access</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <FormSection title="Join Policy" borderTop>
+                {/* Changed to a vertical flex container with spacing */}
+                <div className="flex flex-col gap-2 max-w-md">
+                  <SelectField
+                    control={form.control}
+                    name="programType"
+                    label="Registration Method"
+                    options={[
+                      { value: "open", label: "Open — Anyone can join" },
+                      {
+                        value: "invite_only",
+                        label: "Invite Only — Manual link only",
+                      },
+                      {
+                        value: "application",
+                        label: "Application — Approval required",
+                      },
+                    ]}
+                    icon={form.watch("programType") === "open" ? Users : Lock}
+                    affiliate={false}
+                  />
+                  {/* The text now naturally sits below the input */}
+                  <p className="text-xs text-muted-foreground italic px-1">
+                    {form.watch("programType") === "open"
+                      ? "Program is visible to all potential affiliates."
+                      : "Program is private. Affiliates need a specific invite or approval."}
+                  </p>
+                </div>
+              </FormSection>
+            </CardContent>
           </Card>
         </form>
       </Form>

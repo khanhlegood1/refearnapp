@@ -23,4 +23,20 @@ export const orgSettingsSchema = z.object({
   commissionDurationUnit: z.enum(["day", "week", "month", "year"]),
   currency: z.enum(["USD", "EUR", "GBP", "CAD", "AUD"]),
   attributionModel: z.enum(["FIRST_CLICK", "LAST_CLICK"]),
+  isPrivate: z.boolean().default(false),
+  programType: z.enum(["open", "invite_only", "application"]).default("open"),
+  minimumPayoutThreshold: z
+    .string()
+    .regex(/^\d+(\.\d{1,2})?$/, "Invalid amount")
+    .default("0"),
+  tosUrl: z
+    .string()
+    .url("Must be a valid URL")
+    .optional()
+    .or(z.literal("")) // Allow empty string
+    .nullable(),
+  holdPeriodDays: z
+    .string()
+    .regex(/^\d+$/, "Must be a whole number")
+    .default("45"),
 })

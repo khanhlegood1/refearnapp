@@ -15,6 +15,27 @@
       "when": 1774600084511,
       "tag": "0001_majestic_wildside",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1776683985085,
+      "tag": "0002_red_celestials",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1776684838760,
+      "tag": "0003_nervous_landau",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1776685041673,
+      "tag": "0004_gigantic_exodus",
+      "breakpoints": true
     }
   ]
 }

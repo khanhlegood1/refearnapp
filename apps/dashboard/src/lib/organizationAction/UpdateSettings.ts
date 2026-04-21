@@ -72,6 +72,21 @@ export async function updateSettings(
       Number(data.commissionDurationValue)
     )
   }
+  if (data.programType !== undefined) {
+    updateData.programType = data.programType
+    updateData.isPrivate = data.programType !== "open"
+  }
+  if (data.minimumPayoutThreshold !== undefined) {
+    updateData.minimumPayoutThreshold = Number(
+      data.minimumPayoutThreshold
+    ).toFixed(2)
+  }
+  if (data.holdPeriodDays !== undefined) {
+    updateData.holdPeriodDays = Math.round(Number(data.holdPeriodDays))
+  }
+  if (data.tosUrl !== undefined) {
+    updateData.tosUrl = data.tosUrl?.trim() || null
+  }
 
   if (Object.keys(updateData).length === 0) return
 

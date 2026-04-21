@@ -17,14 +17,16 @@ import {
   Globe,
   Link2,
   Loader2,
+  Lock,
   Percent,
+  Users,
 } from "lucide-react"
 import { CreateOrganization } from "@/app/(organization)/(auth)/create-company/action"
 import { InputField } from "@/components/Auth/FormFields"
 import { SelectField } from "@/components/ui-custom/SelectFields"
 import { LogoUpload } from "@/components/ui-custom/LogoUpload"
 import { DomainInputField } from "@/components/ui-custom/DomainInputField"
-import { useMemo, useState } from "react"
+import React, { useMemo, useState } from "react"
 import { CompanyFormValues, companySchema } from "@/lib/schema/companySchema"
 import { useCustomToast } from "@/components/ui-custom/ShowCustomToast"
 import { useCachedValidation } from "@/hooks/useCachedValidation"
@@ -58,6 +60,7 @@ const CreateCompany = ({ mode, embed }: CreateCompanyProps) => {
       commissionDurationValue: 30,
       commissionDurationUnit: "day",
       currency: "USD",
+      programType: "open",
       defaultDomain: "",
     },
   })
@@ -262,7 +265,34 @@ const CreateCompany = ({ mode, embed }: CreateCompanyProps) => {
           icon={BadgeDollarSign}
           affiliate={false}
         />
-
+        {/* --- ADDED SECTION --- */}
+        <FormSection title="Program Privacy" borderTop>
+          <div className="flex flex-col gap-2">
+            <SelectField
+              control={form.control}
+              name="programType"
+              label="Registration Method"
+              options={[
+                { value: "open", label: "Open — Anyone can join" },
+                {
+                  value: "invite_only",
+                  label: "Invite Only — Manual link only",
+                },
+                {
+                  value: "application",
+                  label: "Application — Approval required",
+                },
+              ]}
+              icon={form.watch("programType") === "open" ? Users : Lock}
+              affiliate={false}
+            />
+            <p className="text-xs text-muted-foreground italic px-1">
+              {form.watch("programType") === "open"
+                ? "Your program will be visible to everyone."
+                : "Your program will be private and require manual approval/invites."}
+            </p>
+          </div>
+        </FormSection>
         <DomainInputField
           control={form.control}
           form={form}

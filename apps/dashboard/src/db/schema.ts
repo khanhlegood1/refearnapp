@@ -69,6 +69,26 @@ export type AttributionModel = (typeof ATTRIBUTION_MODELS)[number]
 export const PAYOUT_PROVIDERS = ["paypal", "wise", "payoneer"] as const
 export type PayoutProvider = (typeof PAYOUT_PROVIDERS)[number]
 
+export const PROGRAM_TYPES = ["open", "invite_only", "application"] as const
+export type ProgramType = (typeof PROGRAM_TYPES)[number]
+
+export const AFFILIATE_STATUSES = [
+  "pending",
+  "active",
+  "rejected",
+  "suspended",
+] as const
+export type AffiliateStatus = (typeof AFFILIATE_STATUSES)[number]
+
+export const COMMISSION_STATUSES = [
+  "pending",
+  "approved",
+  "flagged",
+  "rejected",
+  "paid",
+] as const
+export type CommissionStatus = (typeof COMMISSION_STATUSES)[number]
+
 export const AFFILIATE_INVOICE_REASONS = [
   "subscription_create",
   "subscription_update",
@@ -292,6 +312,19 @@ export const organization = pgTable(
       .notNull()
       .default("LAST_CLICK"),
     currency: text("currency").$type<Currency>().notNull().default("USD"),
+    isPrivate: boolean("is_private").notNull().default(false),
+    programType: text("program_type")
+      .$type<ProgramType>()
+      .notNull()
+      .default("open"),
+    minimumPayoutThreshold: numeric("minimum_payout_threshold", {
+      precision: 10,
+      scale: 2,
+    })
+      .notNull()
+      .default("0"),
+    tosUrl: text("tos_url"),
+    holdPeriodDays: integer("hold_period_days").notNull().default(45),
     createdAt: timestamp("created_at").defaultNow().notNull(),
     updatedAt: timestamp("updated_at").defaultNow().notNull(),
   },
@@ -413,6 +446,10 @@ export const affiliate = pgTable(
     email: text("email").notNull(),
     image: text("image"),
     type: text("type").$type<AccountType>().default("AFFILIATE").notNull(),
+    status: text("status").$type<AffiliateStatus>().notNull().default("active"),
+    appliedAt: timestamp("applied_at"),
+    reviewedAt: timestamp("reviewed_at"),
+    signupIp: text("signup_ip"),
     createdAt: timestamp("created_at").defaultNow().notNull(),
     updatedAt: timestamp("updated_at").defaultNow().notNull(),
     organizationId: text("organization_id")
@@ -570,6 +607,13 @@ export const affiliateInvoice = pgTable(
       .$type<AffiliateInvoiceReason>()
       .notNull()
       .default("one_time"),
+    status: text("status")
+      .$type<CommissionStatus>()
+      .notNull()
+      .default("pending"),
+    suspicionScore: integer("suspicion_score").notNull().default(0),
+    suspicionReasons: text("suspicion_reasons").array(),
+    holdUntil: timestamp("hold_until"),
     refundedAt: timestamp("refunded_at"),
     createdAt: timestamp("created_at").defaultNow().notNull(),
     updatedAt: timestamp("updated_at").defaultNow().notNull(),
