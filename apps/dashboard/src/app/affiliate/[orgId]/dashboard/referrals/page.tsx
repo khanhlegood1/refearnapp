@@ -30,7 +30,7 @@ const referralPage = async ({ params }: OrgIdProps) => {
   return (
     <div className="space-y-6">
       <MissingPaypalEmailCard affiliate orgId={orgId} />
-      <AffiliateReferralsTable orgId={orgId} />
+      <AffiliateReferralsTable orgId={orgId} affiliate />
     </div>
   )
 }

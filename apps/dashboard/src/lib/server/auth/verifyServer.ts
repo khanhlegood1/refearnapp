@@ -6,6 +6,7 @@ import {
   account,
   affiliate,
   affiliateAccount,
+  affiliateInviteToken,
   team,
   teamAccount,
   user,
@@ -125,6 +126,12 @@ export const VerifyServer = async ({ token, mode }: VerifyServerProps) => {
             .set({ emailVerified: new Date() })
             .where(eq(affiliateAccount.id, affiliateAcc.id))
         }
+        if (decoded.inviteToken) {
+          await db
+            .update(affiliateInviteToken)
+            .set({ usedAt: new Date() })
+            .where(eq(affiliateInviteToken.token, decoded.inviteToken))
+        }
       }
     }
 
@@ -171,9 +178,16 @@ export const VerifyServer = async ({ token, mode }: VerifyServerProps) => {
       sameSite: "lax",
       maxAge: decoded.rememberMe ? 30 * 24 * 60 * 60 : undefined,
     })
+    const currentAffiliate = await db.query.affiliate.findFirst({
+      where: eq(affiliate.id, sessionPayload.id),
+    })
 
+    let path = "email-verified"
+    if (currentAffiliate?.status === "pending") {
+      path = "pending-approval"
+    }
     const finalRedirect = buildAffiliateUrl({
-      path: "email-verified",
+      path,
       organizationId: sessionPayload.orgId,
       baseUrl,
       partial: true,

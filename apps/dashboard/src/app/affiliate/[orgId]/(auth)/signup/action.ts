@@ -1,6 +1,6 @@
 "use server"
 
-import { affiliate, affiliateAccount } from "@/db/schema"
+import { affiliate, affiliateAccount, organization } from "@/db/schema"
 import { db } from "@/db/drizzle"
 import * as bcrypt from "bcrypt"
 import jwt from "jsonwebtoken"
@@ -11,6 +11,8 @@ import { buildAffiliateUrl } from "@/util/Url"
 import { MutationData } from "@/lib/types/organization/response"
 import { handleAction } from "@/lib/handleAction"
 import { AppError } from "@/lib/exceptions"
+import { headers } from "next/headers"
+import { eq } from "drizzle-orm"
 
 type CreateAffiliatePayload = {
   name: string
@@ -27,7 +29,10 @@ export const SignupAffiliateServer = async ({
   email,
   password,
   organizationId,
-}: CreateAffiliatePayload): Promise<MutationData> => {
+  inviteToken,
+}: CreateAffiliatePayload & {
+  inviteToken?: string
+}): Promise<MutationData> => {
   return handleAction("Signup Affiliate Server", async () => {
     if (!email || !password || !name || !organizationId) {
       throw new AppError({
@@ -36,6 +41,16 @@ export const SignupAffiliateServer = async ({
         toast: "Please fill in all required fields.",
       })
     }
+    const headerList = await headers()
+    const ip = headerList.get("x-forwarded-for") || "unknown"
+    const [org] = await db
+      .select()
+      .from(organization)
+      .where(eq(organization.id, organizationId))
+      .limit(1)
+    if (!org) throw new AppError({ status: 404, error: "Org not found" })
+    const initialStatus =
+      org.programType === "application" ? "pending" : "active"
     const normalizedEmail = email.trim().toLowerCase()
     const existingAffiliate = await db.query.affiliate.findFirst({
       where: (a, { and, eq }) =>
@@ -115,6 +130,9 @@ export const SignupAffiliateServer = async ({
         email: normalizedEmail,
         type: "AFFILIATE",
         organizationId,
+        status: initialStatus,
+        signupIp: ip,
+        appliedAt: org.programType === "application" ? new Date() : null,
       })
       .returning()
 
@@ -139,6 +157,7 @@ export const SignupAffiliateServer = async ({
         email: newAffiliate.email,
         type: newAffiliate.type,
         organizationId: newAffiliate.organizationId,
+        inviteToken,
       },
       process.env.SECRET_KEY as string,
       { expiresIn: "15m" }

@@ -11,6 +11,7 @@ import {
   affiliateAccount,
   teamAccount,
   team,
+  organization,
 } from "@/db/schema"
 import { eq } from "drizzle-orm"
 import { buildAffiliateUrl } from "@/util/Url"
@@ -266,6 +267,13 @@ export const GET = handleRoute("Google OAuth Callback", async (req) => {
         })
         aff = byEmail
       } else {
+        const orgSettings = await db.query.organization.findFirst({
+          where: eq(organization.id, orgId),
+        })
+
+        const initialStatus =
+          orgSettings?.programType === "application" ? "pending" : "active"
+
         const [createdAff] = await db
           .insert(affiliate)
           .values({
@@ -274,6 +282,9 @@ export const GET = handleRoute("Google OAuth Callback", async (req) => {
             image,
             organizationId: orgId,
             type: "AFFILIATE",
+            status: initialStatus,
+            appliedAt: initialStatus === "pending" ? new Date() : null,
+            signupIp: req.headers.get("x-forwarded-for") || "unknown",
           })
           .returning()
         aff = createdAff

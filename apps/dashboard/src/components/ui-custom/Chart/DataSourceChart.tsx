@@ -38,6 +38,7 @@ import { cn } from "@/lib/utils"
 import { getResponsiveCardHeight } from "@/util/GetResponsiveSelectWidth"
 import { useUltraSmall } from "@/hooks/useUltraSmall"
 import { api } from "@/lib/apiClient"
+import { useVerifyAffiliateSession } from "@/hooks/useVerifyAffiliateSession"
 
 const chartConfig: ChartConfig = {
   visitors: { label: "Visitors" },
@@ -65,6 +66,7 @@ export default function SocialTrafficPieChart({
   } = useAtomValue(dashboardThemeCustomizationAtom)
   const dashboardCardStyle = useDashboardCard(affiliate)
   useVerifyTeamSession(orgId, isTeam)
+  useVerifyAffiliateSession(orgId, affiliate)
   const {
     pieFallbackColor,
     pieColor2,

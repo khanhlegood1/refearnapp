@@ -44,7 +44,14 @@ export const LoginAffiliateServer = async ({
         fields: { email: "Affiliate not found in this organization" },
       })
     }
-
+    if (existingAffiliate?.status === "rejected") {
+      throw new AppError({
+        status: 403,
+        error: "Account Rejected",
+        toast:
+          "This account has been rejected. Please contact the organization for details.",
+      })
+    }
     // Find the affiliate account with provider = 'credentials'
     const affiliateAcc = await db.query.affiliateAccount.findFirst({
       where: (aa, { and, eq }) =>

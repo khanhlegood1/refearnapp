@@ -27,19 +27,23 @@ import { DashboardCardCustomizationOptions } from "@/components/ui-custom/Custom
 import { TableCustomizationOptions } from "@/components/ui-custom/Customization/DashboardCustomization/TableCustomizationOptions"
 import { previewSimulationAtom } from "@/store/PreviewSimulationAtom"
 import { showNotificationAtom } from "@/store/ShowNotificationAtom"
+import { useVerifyAffiliateSession } from "@/hooks/useVerifyAffiliateSession"
 
 export default function AffiliateCouponsTable({
   orgId,
   isPreview = false,
+  affiliate = true,
 }: {
   orgId: string
   isPreview?: boolean
+  affiliate: boolean
 }) {
   const {
     dashboardHeaderDescColor,
     dashboardHeaderNameColor,
     cardHeaderPrimaryTextColor,
   } = useAtomValue(dashboardThemeCustomizationAtom)
+  useVerifyAffiliateSession(orgId, affiliate)
   const previewSimulation = useAtomValue(previewSimulationAtom)
   const dashboardCardStyle = useDashboardCard(true) // Always true for affiliate dashboard
   const showNotificationSwitch = useAtomValue(showNotificationAtom)

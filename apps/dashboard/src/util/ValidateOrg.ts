@@ -8,7 +8,7 @@ export async function validateOrg(orgId: string) {
   })
 
   if (!org) {
-    return { orgFound: false }
+    return { orgFound: false, org: null }
   }
   return { orgFound: true, org }
 }

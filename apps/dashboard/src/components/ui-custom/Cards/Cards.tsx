@@ -34,6 +34,7 @@ import { useAppQuery } from "@/hooks/useAppQuery"
 import { previewSimulationAtom } from "@/store/PreviewSimulationAtom"
 import { useVerifyTeamSession } from "@/hooks/useVerifyTeamSession"
 import { api } from "@/lib/apiClient"
+import { useVerifyAffiliateSession } from "@/hooks/useVerifyAffiliateSession"
 
 interface CardsProps {
   orgId: string
@@ -65,6 +66,7 @@ const Cards = ({
     dashboardThemeCustomizationAtom
   )
   useVerifyTeamSession(orgId, isTeam)
+  useVerifyAffiliateSession(orgId, affiliate)
   const previewSimulation = useAtomValue(previewSimulationAtom)
   const dashboardCardStyle = useDashboardCard(affiliate)
   const kpiCard = useAtomValue(kpiCardCustomizationAtom)

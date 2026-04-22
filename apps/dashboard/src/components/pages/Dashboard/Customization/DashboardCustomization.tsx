@@ -90,7 +90,7 @@ export function DashboardCustomization({
                     isPreview
                     onOpenProfile={() => setSelectedPage("profile")}
                   />
-                  <AffiliateReferralsTable orgId={orgId} isPreview />
+                  <AffiliateReferralsTable orgId={orgId} isPreview affiliate />
                 </div>
               )}
               {selectedPage === "coupons" && (
@@ -101,7 +101,7 @@ export function DashboardCustomization({
                     isPreview
                     onOpenProfile={() => setSelectedPage("profile")}
                   />
-                  <AffiliateCouponsTable orgId={orgId} isPreview />
+                  <AffiliateCouponsTable orgId={orgId} isPreview affiliate />
                 </div>
               )}
               {selectedPage === "payment" && (

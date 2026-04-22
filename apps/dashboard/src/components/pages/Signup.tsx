@@ -43,6 +43,7 @@ type Props = {
   affiliate: boolean
   isTeam?: boolean
   plan: "FREE" | "PRO" | "ULTIMATE"
+  inviteToken?: string
 }
 const Signup = ({
   orgId,
@@ -51,6 +52,7 @@ const Signup = ({
   affiliate,
   isTeam = false,
   plan,
+  inviteToken,
 }: Props) => {
   const [previewLoading, setPreviewLoading] = useState(false)
   const isSelfHosted = process.env.NEXT_PUBLIC_SELF_HOSTED === "true"
@@ -165,7 +167,7 @@ const Signup = ({
     } else if (orgId && affiliate) {
       const email = data.email.trim().toLowerCase()
       if (emailCache.shouldSkip(email)) return
-      affiliateMutation.mutate({ ...data, organizationId: orgId })
+      affiliateMutation.mutate({ ...data, organizationId: orgId, inviteToken })
     } else {
       const email = data.email.trim().toLowerCase()
       if (emailCache.shouldSkip(email)) return

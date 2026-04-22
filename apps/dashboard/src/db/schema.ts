@@ -765,6 +765,20 @@ export const invitation = pgTable(
   },
   (table) => [index("invitation_created_at_idx").on(table.createdAt)]
 )
+export const affiliateInviteToken = pgTable("affiliate_invite_token", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  orgId: text("org_id")
+    .notNull()
+    .references(() => organization.id, { onDelete: "cascade" }),
+  email: text("email"),
+  token: text("token")
+    .notNull()
+    .unique()
+    .$defaultFn(() => createId()),
+  expiresAt: timestamp("expires_at").notNull(),
+  usedAt: timestamp("used_at"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+})
 export const licenseKeys = pgTable(
   "license_keys",
   {

@@ -10,6 +10,7 @@ export type EmailType =
   | "email-change"
   | "reset-password"
   | "team-invite"
+  | "affiliate-invite"
 type EmailPayload = {
   subject: string
   heading: string
@@ -50,6 +51,12 @@ const EMAIL_CONTENT: Record<EmailType, EmailContentResolver> = {
     subject: extra?.title ?? "You're Invited to Join a Team",
     heading: extra?.title ?? "Team Invitation",
     button: "Accept Invitation",
+    description: extra?.description ?? null,
+  }),
+  "affiliate-invite": (extra) => ({
+    subject: "Partner Invitation: Join our Affiliate Program",
+    heading: "Affiliate Invitation",
+    button: "Join Program",
     description: extra?.description ?? null,
   }),
 }

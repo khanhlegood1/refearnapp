@@ -42,6 +42,7 @@ import { cn } from "@/lib/utils"
 import { getResponsiveCardHeight } from "@/util/GetResponsiveSelectWidth"
 import { formatCurrency } from "@/util/Formatter"
 import { api } from "@/lib/apiClient"
+import { useVerifyAffiliateSession } from "@/hooks/useVerifyAffiliateSession"
 
 interface ChartDailyMetricsProps {
   orgId: string
@@ -58,6 +59,7 @@ export function ChartDailyMetrics({
 }: ChartDailyMetricsProps) {
   const previewSimulation = useAtomValue(previewSimulationAtom)
   useVerifyTeamSession(orgId, isTeam)
+  useVerifyAffiliateSession(orgId, affiliate)
   const { filters, setFilters } = useQueryFilter({
     yearKey: "chartYear",
     monthKey: "chartMonth",

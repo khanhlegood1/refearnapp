@@ -72,7 +72,7 @@ export const inviteTeamMember = async ({
         fields: { email: "Already a team member" },
       })
     }
-    const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000)
+    const expiresAt = new Date(Date.now() + 48 * 60 * 60 * 1000)
     const [invite] = await db
       .insert(invitation)
       .values({

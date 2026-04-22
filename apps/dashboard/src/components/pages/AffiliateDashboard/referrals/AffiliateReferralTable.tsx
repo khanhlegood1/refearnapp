@@ -16,20 +16,23 @@ import { dashboardThemeCustomizationAtom } from "@/store/DashboardCustomizationA
 import { useDashboardCard } from "@/hooks/useDashboardCard"
 import { getDummyReferrals } from "@/lib/types/analytics/dummyReferralData"
 import { DashboardThemeCustomizationOptions } from "@/components/ui-custom/Customization/DashboardCustomization/DashboardThemeCustomizationOptions"
+import { useVerifyAffiliateSession } from "@/hooks/useVerifyAffiliateSession"
 
 export default function AffiliateReferralsTable({
   orgId,
   isPreview = false,
+  affiliate = true,
 }: {
   orgId: string
   isPreview?: boolean
+  affiliate: boolean
 }) {
   const { cardHeaderPrimaryTextColor } = useAtomValue(
     dashboardThemeCustomizationAtom
   )
   const previewSimulation = useAtomValue(previewSimulationAtom)
   const dashboardCardStyle = useDashboardCard(true)
-
+  useVerifyAffiliateSession(orgId, affiliate)
   const { filters, setFilters } = useQueryFilter({})
 
   // Fake loading effect for preview pagination

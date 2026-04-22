@@ -28,6 +28,7 @@ import { previewSimulationAtom } from "@/store/PreviewSimulationAtom"
 import { useQueryClient } from "@tanstack/react-query"
 import { api } from "@/lib/apiClient"
 import { useAppTable } from "@/hooks/useAppTable"
+import { useVerifyAffiliateSession } from "@/hooks/useVerifyAffiliateSession"
 
 interface AffiliateLinkProps {
   orgId: string
@@ -44,6 +45,7 @@ export default function Links({
     dashboardHeaderNameColor,
     cardHeaderPrimaryTextColor,
   } = useAtomValue(dashboardThemeCustomizationAtom)
+  useVerifyAffiliateSession(orgId, affiliate)
   const previewSimulation = useAtomValue(previewSimulationAtom)
   const {
     dashboardButtonDisabledTextColor,
@@ -217,7 +219,8 @@ export default function Links({
                   commission on one-time payments
                   {orgData.commissionDurationValue && (
                     <>
-                      {" "}and for{" "}
+                      {" "}
+                      and for{" "}
                       <strong>
                         {orgData.commissionDurationValue}{" "}
                         {orgData.commissionDurationValue === 1

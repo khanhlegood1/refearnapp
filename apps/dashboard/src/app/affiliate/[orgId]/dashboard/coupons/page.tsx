@@ -61,7 +61,7 @@ const couponsPage = async ({ params }: OrgIdProps) => {
   return (
     <div className="space-y-6">
       <MissingPaypalEmailCard affiliate orgId={orgId} />
-      <AffiliateCouponsTable orgId={orgId} />
+      <AffiliateCouponsTable orgId={orgId} affiliate />
     </div>
   )
 }

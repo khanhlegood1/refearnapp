@@ -11,8 +11,20 @@ import { useAppQuery } from "@/hooks/useAppQuery"
 import { TableView } from "@/components/ui-custom/TableView"
 import { useVerifyTeamSession } from "@/hooks/useVerifyTeamSession"
 import { api } from "@/lib/apiClient"
+import { Form } from "@/components/ui/form"
 import { useAppTable } from "@/hooks/useAppTable"
 import { OrderBy } from "@/lib/types/analytics/orderTypes"
+import z from "zod"
+import { useState } from "react"
+import { inviteTeamAffiliateAction } from "@/app/(organization)/organization/[orgId]/teams/dashboard/affiliates/action"
+import { inviteAffiliateAction } from "@/app/(organization)/organization/[orgId]/dashboard/affiliates/action"
+import { useAppMutation } from "@/hooks/useAppMutation"
+import { zodResolver } from "@hookform/resolvers/zod"
+import { useForm } from "react-hook-form"
+import { Button } from "@/components/ui/button"
+import { Plus } from "lucide-react"
+import { AppDialog } from "@/components/ui-custom/AppDialog"
+import { InputField, TextareaField } from "@/components/Auth/FormFields"
 
 interface AffiliatesTableProps {
   orgId: string
@@ -23,6 +35,10 @@ interface AffiliatesTableProps {
   isTeam?: boolean
   orderOptions?: OrderBy[]
 }
+const inviteSchema = z.object({
+  email: z.string().email("Valid email required"),
+  message: z.string().min(1, "Message is required"),
+})
 export default function AffiliatesTable({
   orgId,
   cardTitle = "Overview of all affiliate activities",
@@ -32,7 +48,27 @@ export default function AffiliatesTable({
   isTeam = false,
   orderOptions,
 }: AffiliatesTableProps) {
+  const [openInvite, setOpenInvite] = useState(false)
+  const inviteAction = isTeam
+    ? inviteTeamAffiliateAction
+    : inviteAffiliateAction
   useVerifyTeamSession(orgId, isTeam)
+  const form = useForm<z.infer<typeof inviteSchema>>({
+    resolver: zodResolver(inviteSchema),
+    defaultValues: { email: "", message: "" },
+  })
+
+  const inviteMutation = useAppMutation(inviteAction, {
+    onSuccess: (res) => {
+      if (res.ok) {
+        setOpenInvite(false)
+        form.reset()
+      }
+    },
+  })
+  const onInviteSubmit = (data: z.infer<typeof inviteSchema>) => {
+    inviteMutation.mutate({ ...data, orgId })
+  }
   const columns = AffiliatesColumns()
   const { filters, setFilters } = useQueryFilter()
   const {
@@ -116,6 +152,16 @@ export default function AffiliatesTable({
             onOrderChange={(orderBy, orderDir) =>
               setFilters({ orderBy, orderDir })
             }
+            rightActions={
+              <Button
+                onClick={() => setOpenInvite(true)}
+                size="sm"
+                className="gap-2"
+              >
+                <Plus className="w-4 h-4" />
+                Invite Affiliate
+              </Button>
+            }
             orderOptions={orderOptions}
             onEmailChange={(email) => setFilters({ email: email || undefined })}
             affiliate={false}
@@ -141,6 +187,37 @@ export default function AffiliatesTable({
           )}
         </CardContent>
       </Card>
+      <AppDialog
+        open={openInvite}
+        onOpenChange={setOpenInvite}
+        title="Invite Affiliate"
+        description="Invite a partner to join your affiliate program."
+        confirmText="Send Invitation"
+        confirmLoading={inviteMutation.isPending}
+        onConfirm={form.handleSubmit(onInviteSubmit)}
+        affiliate={false}
+      >
+        <Form {...form}>
+          <form className="space-y-4">
+            <InputField
+              control={form.control}
+              name="email"
+              label="Partner Email"
+              placeholder="partner@example.com"
+              type="email"
+              affiliate={false}
+            />
+            <TextareaField
+              control={form.control}
+              name="message"
+              label="Personal Message"
+              placeholder="Hey! Join our program..."
+              rows={4}
+              affiliate={false}
+            />
+          </form>
+        </Form>
+      </AppDialog>
     </div>
   )
 }

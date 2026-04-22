@@ -19,6 +19,7 @@ import { TableView } from "@/components/ui-custom/TableView"
 import { previewSimulationAtom } from "@/store/PreviewSimulationAtom"
 import { api } from "@/lib/apiClient"
 import { useAppTable } from "@/hooks/useAppTable"
+import { useVerifyAffiliateSession } from "@/hooks/useVerifyAffiliateSession"
 
 interface AffiliateCommissionTableProps {
   orgId: string
@@ -36,6 +37,7 @@ export default function AffiliateCommissionTable({
     cardHeaderPrimaryTextColor,
     dashboardHeaderNameColor,
   } = useAtomValue(dashboardThemeCustomizationAtom)
+  useVerifyAffiliateSession(orgId, affiliate)
   const previewSimulation = useAtomValue(previewSimulationAtom)
   const dashboardCardStyle = useDashboardCard(affiliate)
   const { filters, setFilters } = useQueryFilter()
