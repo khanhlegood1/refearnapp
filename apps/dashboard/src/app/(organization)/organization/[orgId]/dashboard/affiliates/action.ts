@@ -1,3 +1,4 @@
+"use server"
 import { handleAction } from "@/lib/handleAction"
 import { getOrgAuth } from "@/lib/server/organization/GetOrgAuth"
 import { inviteAffiliateService } from "@/lib/server/internal/inviteAffiliateService"

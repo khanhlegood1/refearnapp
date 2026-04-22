@@ -1,3 +1,4 @@
+"use server"
 import { handleAction } from "@/lib/handleAction"
 import { getTeamAuthAction } from "@/lib/server/team/getTeamAuthAction"
 import { inviteAffiliateService } from "@/lib/server/internal/inviteAffiliateService"
