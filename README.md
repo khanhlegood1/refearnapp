@@ -27,7 +27,7 @@
 </p>
 
 <p align="center">
-  <img src="https://assets.refearnapp.com/demo_updated.gif" alt="RefearnApp Dashboard Demo" width="100%" />
+  <img src="https://assets.refearnapp.com/demo_updated_v2.gif" alt="RefearnApp Dashboard Demo" width="100%" />
 </p>
 ---
 
