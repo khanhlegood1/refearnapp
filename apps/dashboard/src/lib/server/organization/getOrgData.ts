@@ -75,6 +75,7 @@ export const getOrgData = async (
         | "AUD",
       attributionModel: org.attributionModel,
       isPrivate: org.isPrivate,
+      showBranding: org.showBranding,
       programType: org.programType as "open" | "invite_only" | "application",
       minimumPayoutThreshold: String(org.minimumPayoutThreshold ?? "0"),
       holdPeriodDays: org.holdPeriodDays,

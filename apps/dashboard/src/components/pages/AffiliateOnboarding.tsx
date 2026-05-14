@@ -30,6 +30,7 @@ import { useAppMutation } from "@/hooks/useAppMutation"
 import { completeAffiliateOnboardingAction } from "@/app/affiliate/[orgId]/(auth)/onboarding/action"
 import { MultiSelectField } from "@/components/ui-custom/MultiSelectField"
 import { useQueryClient } from "@tanstack/react-query"
+import { useBrandingPreference } from "@/hooks/useBrandingPreference"
 
 const onboardingSchema = z.object({
   websiteUrl: z.string().url("Invalid URL").optional().or(z.literal("")),
@@ -46,14 +47,12 @@ type OnboardingValues = z.infer<typeof onboardingSchema>
 type Props = {
   orgId: string
   affiliate: boolean
-  plan: "FREE" | "PRO" | "ULTIMATE"
   isPreview?: boolean
 }
 
 const AffiliateOnboarding = ({
   orgId,
   affiliate,
-  plan,
   isPreview = false,
 }: Props) => {
   const [previewLoading, setPreviewLoading] = useState(false)
@@ -106,7 +105,10 @@ const AffiliateOnboarding = ({
   }))
 
   const isLoading = isPreview ? previewLoading : mutation.isPending
-
+  const { showBranding, isLoading: brandingLoading } = useBrandingPreference(
+    orgId,
+    affiliate
+  )
   const onSubmit = async (data: OnboardingValues) => {
     if (isPreview) {
       setPreviewLoading(true)
@@ -258,7 +260,7 @@ const AffiliateOnboarding = ({
           )}
         </Card>
 
-        {plan !== "ULTIMATE" && affiliate && (
+        {!brandingLoading && affiliate && showBranding && (
           <PoweredByBranding color={textColor} />
         )}
       </div>

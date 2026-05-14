@@ -21,7 +21,7 @@ const InvalidTokenPage = async ({ params }: OrgIdProps) => {
   await redirectTeamIfAuthed(orgId)
   return (
     <>
-      <InvalidToken affiliate={false} plan={"ULTIMATE"} />
+      <InvalidToken affiliate={false} />
     </>
   )
 }

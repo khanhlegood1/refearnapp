@@ -29,6 +29,7 @@ export const orgSettingsSchema = z.object({
     .string()
     .regex(/^\d+(\.\d{1,2})?$/, "Invalid amount")
     .default("0"),
+  showBranding: z.boolean().default(true),
   holdPeriodDays: z
     .string()
     .regex(/^\d+$/, "Must be a whole number")

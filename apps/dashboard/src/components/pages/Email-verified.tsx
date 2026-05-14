@@ -16,6 +16,7 @@ import {
 import { useAffiliatePath } from "@/hooks/useUrl"
 import { PoweredByBranding } from "@/components/ui-custom/PoweredByBranding"
 import { useContrastColor } from "@/hooks/useContrastColor"
+import { useBrandingPreference } from "@/hooks/useBrandingPreference"
 type CustomMessages = {
   signup?: string
   login?: string
@@ -29,7 +30,6 @@ type Props = {
   mode?: "signup" | "login" | "changeEmail"
   customMessages?: CustomMessages
   isTeam?: boolean
-  plan: "FREE" | "PRO" | "ULTIMATE"
 }
 
 const EmailVerified = ({
@@ -40,7 +40,6 @@ const EmailVerified = ({
   mode,
   customMessages,
   isTeam,
-  plan,
 }: Props) => {
   const {
     backgroundColor,
@@ -75,6 +74,10 @@ const EmailVerified = ({
       }
     }
   }
+  const { showBranding, isLoading: brandingLoading } = useBrandingPreference(
+    orgId,
+    affiliate
+  )
   return (
     <div
       className={`relative min-h-screen flex items-center justify-center p-4 ${
@@ -161,7 +164,7 @@ const EmailVerified = ({
             </Button>
           </CardContent>
         </Card>
-        {plan !== "ULTIMATE" && affiliate && (
+        {!brandingLoading && affiliate && showBranding && (
           <PoweredByBranding color={textColor} />
         )}
         {isPreview && (

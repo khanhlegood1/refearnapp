@@ -13,7 +13,7 @@ const forgetPasswordPage = async () => {
   await redirectIfAuthed()
   return (
     <>
-      <ForgotPassword affiliate={false} plan={"ULTIMATE"} />
+      <ForgotPassword affiliate={false} />
     </>
   )
 }

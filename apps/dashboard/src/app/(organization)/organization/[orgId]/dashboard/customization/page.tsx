@@ -8,7 +8,6 @@ import { buildMetadata } from "@/util/BuildMetadata"
 import { getLicense } from "@/lib/server/organization/getLicense"
 import { LicenseRequiredState } from "@/components/ui-custom/LicenseRequiredState"
 import { getActiveDomain } from "@/lib/server/organization/getActiveDomain"
-import { getUnifiedPlan } from "@/lib/server/organization/getUnifiedPlan"
 export async function generateMetadata({
   params,
 }: OrgIdProps): Promise<Metadata> {
@@ -25,7 +24,6 @@ export default async function CustomizationServerPage({ params }: OrgIdProps) {
   const orgId = await getValidatedOrgFromParams({ params })
   await requireOrganizationWithOrg(orgId)
   const licenseResult = await getLicense()
-  const plan = await getUnifiedPlan(orgId)
   const domain = await getActiveDomain(orgId)
   if (licenseResult !== null) {
     if (!licenseResult.ok) {
@@ -62,7 +60,7 @@ export default async function CustomizationServerPage({ params }: OrgIdProps) {
   }
   return (
     <div className="overflow-auto">
-      <CustomizationPage orgId={orgId} plan={plan} />
+      <CustomizationPage orgId={orgId} />
     </div>
   )
 }

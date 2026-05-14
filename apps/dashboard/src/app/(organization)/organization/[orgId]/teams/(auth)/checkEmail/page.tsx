@@ -22,7 +22,7 @@ const CheckEmailPage = async ({ params }: OrgIdProps) => {
   await redirectTeamIfAuthed(orgId)
   return (
     <>
-      <CheckEmail affiliate={false} plan={"ULTIMATE"} />
+      <CheckEmail affiliate={false} />
     </>
   )
 }

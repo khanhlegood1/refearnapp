@@ -84,13 +84,7 @@ export default function VerifyClient({
       data.tokenType === "affiliate" &&
       data.redirectUrl?.includes("pending-approval")
     ) {
-      return (
-        <PendingApproval
-          affiliate={true}
-          plan={"ULTIMATE"}
-          orgId={data.activeOrgId}
-        />
-      )
+      return <PendingApproval affiliate={true} orgId={data.activeOrgId} />
     }
 
     return (
@@ -100,7 +94,6 @@ export default function VerifyClient({
         orgId={data.activeOrgId}
         mode={data.mode}
         customMessages={customMessages}
-        plan={"ULTIMATE"}
       />
     )
   }

@@ -29,6 +29,9 @@ export async function updateSettings(
   if (data.supportEmail !== undefined) {
     updateData.supportEmail = data.supportEmail?.trim().toLowerCase() || null
   }
+  if (data.showBranding !== undefined) {
+    updateData.showBranding = data.showBranding
+  }
   if (data.description !== undefined) {
     updateData.description = data.description?.trim() || ""
   }

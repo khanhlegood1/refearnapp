@@ -7,7 +7,6 @@ import { Metadata } from "next"
 import { getOrganization } from "@/lib/server/organization/getOrganization"
 import { getOrgBaseUrl } from "@/lib/server/organization/getOrgBaseUrl"
 import { buildMetadata } from "@/util/BuildMetadata"
-import { getUnifiedPlan } from "@/lib/server/organization/getUnifiedPlan"
 import InvalidInvite from "@/components/pages/InvalidInvite"
 import { notFound } from "next/navigation"
 import { validateOrg } from "@/util/ValidateOrg"
@@ -42,22 +41,19 @@ const AffiliateSignupPage = async ({
     const isValid = await verifyInviteToken(token, orgId)
 
     if (!isValid) {
-      const plan = await getUnifiedPlan(orgId)
       return (
         <InvalidInvite
           affiliate
           orgId={orgId}
-          plan={plan}
           message="This is a private program. You need a valid invitation link to join."
         />
       )
     }
   }
   await redirectIfAffiliateAuthed(orgId)
-  const plan = await getUnifiedPlan(orgId)
   return (
     <>
-      <Signup affiliate orgId={orgId} plan={plan} inviteToken={token} />
+      <Signup affiliate orgId={orgId} inviteToken={token} />
     </>
   )
 }

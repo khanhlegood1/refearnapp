@@ -35,13 +35,13 @@ import { useAppMutation } from "@/hooks/useAppMutation"
 import { LoginTeamServer } from "@/app/(organization)/organization/[orgId]/teams/(auth)/login/action"
 import { PoweredByBranding } from "@/components/ui-custom/PoweredByBranding"
 import { useContrastColor } from "@/hooks/useContrastColor"
+import { useBrandingPreference } from "@/hooks/useBrandingPreference"
 type Props = {
   orgId?: string
   isPreview?: boolean
   setTab?: (tab: string) => void
   affiliate: boolean
   isTeam?: boolean
-  plan: "FREE" | "PRO" | "ULTIMATE"
 }
 const Login = ({
   orgId,
@@ -49,7 +49,6 @@ const Login = ({
   setTab,
   affiliate,
   isTeam = false,
-  plan,
 }: Props) => {
   const { showCustomToast } = useCustomToast()
   const isSelfHosted = process.env.NEXT_PUBLIC_SELF_HOSTED === "true"
@@ -134,6 +133,10 @@ const Login = ({
       normalMutation.mutate(data)
     }
   }
+  const { showBranding, isLoading: brandingLoading } = useBrandingPreference(
+    orgId,
+    affiliate
+  )
   return (
     <div
       className={`relative min-h-screen flex items-center justify-center p-4 ${
@@ -375,7 +378,7 @@ const Login = ({
             </div>
           )}
         </Card>
-        {plan !== "ULTIMATE" && affiliate && (
+        {!brandingLoading && affiliate && showBranding && (
           <PoweredByBranding color={textColor} />
         )}
       </div>

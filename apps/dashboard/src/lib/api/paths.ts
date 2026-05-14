@@ -50,7 +50,8 @@ export const GET_AFFILIATE_PAYMENT_METHOD_PATH = (orgId: string) =>
 // =============================================================================
 // 🏢 ORGANIZATION (OWNER) DASHBOARD PATHS
 // =============================================================================
-
+export const GET_ORG_BRANDING_PATH = (orgId: string) =>
+  `/api/organization/${orgId}/branding`
 export const GET_ORG_REFERRALS_TABLE_PATH = (
   orgId: string,
   query: { offset?: number }

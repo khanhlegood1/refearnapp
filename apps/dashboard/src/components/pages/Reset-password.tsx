@@ -38,6 +38,7 @@ import { useAppMutation } from "@/hooks/useAppMutation"
 import { resetTeamPasswordServer } from "@/app/(organization)/organization/[orgId]/teams/(auth)/reset-password/action"
 import { PoweredByBranding } from "@/components/ui-custom/PoweredByBranding"
 import { useContrastColor } from "@/hooks/useContrastColor"
+import { useBrandingPreference } from "@/hooks/useBrandingPreference"
 type Props = {
   userId: string
   orgId?: string
@@ -45,7 +46,6 @@ type Props = {
   setTab?: (tab: string) => void
   affiliate: boolean
   isTeam?: boolean
-  plan: "FREE" | "PRO" | "ULTIMATE"
 }
 const ResetPassword = ({
   userId,
@@ -54,7 +54,6 @@ const ResetPassword = ({
   setTab,
   affiliate,
   isTeam = false,
-  plan,
 }: Props) => {
   const form = useForm<ResetPasswordFormValues>({
     resolver: zodResolver(passwordSchema),
@@ -149,6 +148,10 @@ const ResetPassword = ({
       : isTeam
         ? teamMutation.isPending
         : normalMutation.isPending)
+  const { showBranding, isLoading: brandingLoading } = useBrandingPreference(
+    orgId,
+    affiliate
+  )
   return (
     <div
       className={`relative min-h-screen flex items-center justify-center p-4 ${
@@ -335,7 +338,7 @@ const ResetPassword = ({
             </div>
           )}
         </Card>
-        {plan !== "ULTIMATE" && affiliate && (
+        {!brandingLoading && affiliate && showBranding && (
           <PoweredByBranding color={textColor} />
         )}
       </div>

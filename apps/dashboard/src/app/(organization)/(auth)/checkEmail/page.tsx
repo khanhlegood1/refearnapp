@@ -14,7 +14,7 @@ const CheckEmailPage = async () => {
   await redirectIfAuthed()
   return (
     <>
-      <CheckEmail affiliate={false} plan={"ULTIMATE"} />
+      <CheckEmail affiliate={false} />
     </>
   )
 }

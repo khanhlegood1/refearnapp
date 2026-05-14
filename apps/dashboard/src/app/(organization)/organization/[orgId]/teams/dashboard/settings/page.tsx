@@ -7,6 +7,8 @@ import { requireTeamWithOrg } from "@/lib/server/auth/authGuards"
 import { Metadata } from "next"
 import { buildMetadata } from "@/util/BuildMetadata"
 import { getTeamOrgSettings } from "@/lib/server/team/getTeamOrgSettings"
+import { getOrgPlan } from "@/lib/server/organization/getUserPlan"
+import { getLicense } from "@/lib/server/organization/getLicense"
 export async function generateMetadata({
   params,
 }: OrgIdProps): Promise<Metadata> {
@@ -22,12 +24,31 @@ export async function generateMetadata({
 const SettingsPage = async ({ params }: OrgIdProps) => {
   const orgId = await getValidatedOrgFromParams({ params })
   await requireTeamWithOrg(orgId)
-  const orgResponse = await getTeamOrgSettings(orgId)
+  const [orgResponse, planInfo, licenseResult] = await Promise.all([
+    getTeamOrgSettings(orgId),
+    getOrgPlan(orgId),
+    getLicense(),
+  ])
   if (!orgResponse.ok) {
     return <ErrorCard message={orgResponse.error || "Something went wrong"} />
   }
+  let isUltimate = planInfo.plan === "ULTIMATE"
 
-  return <Settings orgData={orgResponse.data} isTeam />
+  if (licenseResult !== null) {
+    if (licenseResult.ok) {
+      const license = licenseResult.data
+      isUltimate = license.isActive && license.isUltimate
+    } else {
+      isUltimate = false
+    }
+  }
+  return (
+    <Settings
+      orgData={orgResponse.data}
+      plan={isUltimate ? "ULTIMATE" : planInfo.plan}
+      isTeam
+    />
+  )
 }
 
 export default SettingsPage

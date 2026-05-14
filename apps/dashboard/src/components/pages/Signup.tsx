@@ -37,13 +37,13 @@ import { SignupTeamServer } from "@/app/(organization)/organization/[orgId]/team
 import { useContrastColor } from "@/hooks/useContrastColor"
 import { PoweredByBranding } from "@/components/ui-custom/PoweredByBranding"
 import { registrationSettingsAtom } from "@/store/RegistrationSettingsAtom"
+import { useBrandingPreference } from "@/hooks/useBrandingPreference"
 type Props = {
   orgId?: string
   isPreview?: boolean
   setTab?: (tab: string) => void
   affiliate: boolean
   isTeam?: boolean
-  plan: "FREE" | "PRO" | "ULTIMATE"
   inviteToken?: string
 }
 const Signup = ({
@@ -52,7 +52,6 @@ const Signup = ({
   setTab,
   affiliate,
   isTeam = false,
-  plan,
   inviteToken,
 }: Props) => {
   const [previewLoading, setPreviewLoading] = useState(false)
@@ -183,6 +182,10 @@ const Signup = ({
       normalMutation.mutate({ ...data, transactionId: txnId })
     }
   }
+  const { showBranding, isLoading: brandingLoading } = useBrandingPreference(
+    orgId,
+    affiliate
+  )
   return (
     <div
       className={`relative min-h-screen flex items-center justify-center p-4 ${
@@ -466,7 +469,7 @@ const Signup = ({
             </div>
           )}
         </Card>
-        {plan !== "ULTIMATE" && affiliate && (
+        {!brandingLoading && affiliate && showBranding && (
           <PoweredByBranding color={textColor} />
         )}
       </div>

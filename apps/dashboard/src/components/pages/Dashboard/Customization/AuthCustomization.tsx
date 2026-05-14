@@ -32,7 +32,6 @@ import { zodResolver } from "@hookform/resolvers/zod"
 interface AuthCustomizationProps {
   setMainTab?: (tab: string) => void
   orgId: string
-  plan: "FREE" | "PRO" | "ULTIMATE"
   domain?: string
   tab: string
   setTab: (tab: string) => void
@@ -40,7 +39,6 @@ interface AuthCustomizationProps {
 export const AuthCustomization = ({
   setMainTab,
   orgId,
-  plan,
   domain,
   tab,
   setTab,
@@ -214,34 +212,16 @@ export const AuthCustomization = ({
           <TabsTrigger value="invalid-invite">Invalid Invite</TabsTrigger>
         </TabsList>
         <TabsContent value="login">
-          <Login
-            orgId={orgId}
-            affiliate
-            isPreview
-            setTab={setTab}
-            plan={plan}
-          />
+          <Login orgId={orgId} affiliate isPreview setTab={setTab} />
         </TabsContent>
         <TabsContent value="signup">
-          <Signup
-            orgId={orgId}
-            affiliate
-            isPreview
-            setTab={setTab}
-            plan={plan}
-          />
+          <Signup orgId={orgId} affiliate isPreview setTab={setTab} />
         </TabsContent>
         <TabsContent value="onboarding">
-          <AffiliateOnboarding orgId={orgId} affiliate isPreview plan={plan} />
+          <AffiliateOnboarding orgId={orgId} affiliate isPreview />
         </TabsContent>
         <TabsContent value="forgot-password">
-          <ForgotPassword
-            orgId={orgId}
-            affiliate
-            isPreview
-            setTab={setTab}
-            plan={plan}
-          />
+          <ForgotPassword orgId={orgId} affiliate isPreview setTab={setTab} />
         </TabsContent>
         <TabsContent value="reset-password">
           <ResetPassword
@@ -250,11 +230,10 @@ export const AuthCustomization = ({
             isPreview
             setTab={setTab}
             userId="1234"
-            plan={plan}
           />
         </TabsContent>
         <TabsContent value="invalid-token">
-          <InvalidToken orgId={orgId} affiliate isPreview plan={plan} />
+          <InvalidToken orgId={orgId} affiliate isPreview />
         </TabsContent>{" "}
         <TabsContent value="email-verified">
           <EmailVerified
@@ -262,11 +241,10 @@ export const AuthCustomization = ({
             affiliate
             isPreview
             setMainTab={setMainTab}
-            plan={plan}
           />
         </TabsContent>
         <TabsContent value="check-email">
-          <CheckEmail affiliate isPreview orgId={orgId} plan={plan} />
+          <CheckEmail affiliate isPreview orgId={orgId} />
         </TabsContent>
         <TabsContent value="splash-loading">
           <PendingState affiliate isPreview />
@@ -279,10 +257,10 @@ export const AuthCustomization = ({
           )}
         </TabsContent>
         <TabsContent value="pending-approval">
-          <PendingApproval orgId={orgId} affiliate isPreview plan={plan} />
+          <PendingApproval orgId={orgId} affiliate isPreview />
         </TabsContent>
         <TabsContent value="invalid-invite">
-          <InvalidInvite orgId={orgId} affiliate isPreview plan={plan} />
+          <InvalidInvite orgId={orgId} affiliate isPreview />
         </TabsContent>
       </Tabs>
     </div>

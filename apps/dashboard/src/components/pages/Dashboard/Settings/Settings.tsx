@@ -21,6 +21,7 @@ import {
   Lock,
   Users,
   FileText,
+  Sparkles,
 } from "lucide-react"
 import { z } from "zod"
 
@@ -36,14 +37,16 @@ import { updateTeamOrgSettings } from "@/app/(organization)/organization/[orgId]
 import { useVerifyTeamSession } from "@/hooks/useVerifyTeamSession"
 import { FormSection } from "@/components/ui-custom/FormSection"
 import { Button } from "@/components/ui/button"
+import { SwitchField } from "@/components/ui-custom/SwitchField"
 
 type OrgFormData = z.infer<typeof orgSettingsSchema>
-type Props = { orgData: OrgData }
+type Props = {
+  orgData: OrgData
+  plan: string
+  isTeam?: boolean
+}
 
-export default function Settings({
-  orgData,
-  isTeam = false,
-}: Props & { isTeam?: boolean }) {
+export default function Settings({ orgData, plan, isTeam = false }: Props) {
   useVerifyTeamSession(orgData.id, isTeam)
   const safeDefaults: OrgFormData = useMemo(
     () => ({
@@ -83,6 +86,7 @@ export default function Settings({
         Number(orgData?.minimumPayoutThreshold ?? 0)
       ),
       holdPeriodDays: String(orgData?.holdPeriodDays ?? 45),
+      showBranding: orgData?.showBranding ?? true,
     }),
     [orgData]
   )
@@ -447,6 +451,28 @@ export default function Settings({
                   </p>
                 </div>
               </FormSection>
+            </CardContent>
+          </Card>
+
+          {/*White-labeling*/}
+          <Card className="overflow-hidden border-primary/20">
+            <CardHeader className="bg-primary/5 py-4">
+              <div className="flex items-center gap-2">
+                <Sparkles className="w-5 h-5 text-primary" />
+                <CardTitle className="text-lg">
+                  Branding & White-labeling
+                </CardTitle>
+              </div>
+            </CardHeader>
+            <CardContent className="pt-6">
+              <SwitchField
+                control={form.control}
+                name="showBranding"
+                label="Show 'Powered by RefearnApp'"
+                description="Display a small, professional link on your affiliate authentication pages. Keeping this enabled helps support the platform!"
+                disabled={plan !== "ULTIMATE"}
+                premiumBadge="Ultimate Feature"
+              />
             </CardContent>
           </Card>
         </form>

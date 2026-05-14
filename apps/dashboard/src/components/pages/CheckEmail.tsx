@@ -16,15 +16,15 @@ import { openEmailApp } from "@/util/OpenEmailApp"
 import { useSearchParams } from "next/navigation"
 import { PoweredByBranding } from "@/components/ui-custom/PoweredByBranding"
 import { useContrastColor } from "@/hooks/useContrastColor"
+import { useBrandingPreference } from "@/hooks/useBrandingPreference"
 
 type Props = {
   orgId?: string
   isPreview?: boolean
   affiliate: boolean
-  plan: "FREE" | "PRO" | "ULTIMATE"
 }
 
-const CheckEmail = ({ isPreview, affiliate, plan }: Props) => {
+const CheckEmail = ({ orgId, isPreview, affiliate }: Props) => {
   const searchParams = useSearchParams()
   const encodedEmail = searchParams.get("email") || ""
   const email = decodeURIComponent(encodedEmail)
@@ -35,7 +35,10 @@ const CheckEmail = ({ isPreview, affiliate, plan }: Props) => {
   )
   const textColor = useContrastColor(backgroundColor)
   const authCardStyle = useAuthCard(affiliate)
-
+  const { showBranding, isLoading: brandingLoading } = useBrandingPreference(
+    orgId,
+    affiliate
+  )
   return (
     <div
       className={`relative min-h-screen flex items-center justify-center p-4 ${
@@ -130,7 +133,7 @@ const CheckEmail = ({ isPreview, affiliate, plan }: Props) => {
             </div>
           )}
         </Card>
-        {plan !== "ULTIMATE" && affiliate && (
+        {!brandingLoading && affiliate && showBranding && (
           <PoweredByBranding color={textColor} />
         )}
       </div>

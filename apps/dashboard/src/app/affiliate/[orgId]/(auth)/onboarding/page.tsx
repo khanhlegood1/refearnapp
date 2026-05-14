@@ -5,7 +5,6 @@ import { Metadata } from "next"
 import { getOrganization } from "@/lib/server/organization/getOrganization"
 import { getOrgBaseUrl } from "@/lib/server/organization/getOrgBaseUrl"
 import { buildMetadata } from "@/util/BuildMetadata"
-import { getUnifiedPlan } from "@/lib/server/organization/getUnifiedPlan"
 import { requireAffiliateWithOrg } from "@/lib/server/auth/authGuards"
 
 export async function generateMetadata({
@@ -28,9 +27,8 @@ export async function generateMetadata({
 
 const OnboardingPage = async ({ params }: OrgIdProps) => {
   const orgId = await getValidatedOrgFromParams({ params })
-  const plan = await getUnifiedPlan(orgId)
   await requireAffiliateWithOrg(orgId)
-  return <AffiliateOnboarding affiliate orgId={orgId} plan={plan} />
+  return <AffiliateOnboarding affiliate orgId={orgId} />
 }
 
 export default OnboardingPage

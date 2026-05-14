@@ -9,15 +9,15 @@ import { themeCustomizationAtom } from "@/store/AuthCustomizationAtom"
 import { useContrastColor } from "@/hooks/useContrastColor"
 import { PoweredByBranding } from "@/components/ui-custom/PoweredByBranding"
 import { Clock } from "lucide-react"
+import { useBrandingPreference } from "@/hooks/useBrandingPreference"
 
 type Props = {
   orgId?: string
   isPreview?: boolean
   affiliate: boolean
-  plan: "FREE" | "PRO" | "ULTIMATE"
 }
 
-const PendingApproval = ({ isPreview, affiliate, plan }: Props) => {
+const PendingApproval = ({ orgId, isPreview, affiliate }: Props) => {
   const {
     backgroundColor,
     InvalidPrimaryCustomization,
@@ -25,7 +25,10 @@ const PendingApproval = ({ isPreview, affiliate, plan }: Props) => {
   } = useAtomValue(themeCustomizationAtom)
   const authCardStyle = useAuthCard(affiliate)
   const textColor = useContrastColor(backgroundColor)
-
+  const { showBranding, isLoading: brandingLoading } = useBrandingPreference(
+    orgId,
+    affiliate
+  )
   return (
     <div
       className={`relative min-h-screen flex items-center justify-center p-4 ${
@@ -99,7 +102,7 @@ const PendingApproval = ({ isPreview, affiliate, plan }: Props) => {
             </div>
           )}
         </Card>
-        {plan !== "ULTIMATE" && affiliate && (
+        {!brandingLoading && affiliate && showBranding && (
           <PoweredByBranding color={textColor} />
         )}
       </div>

@@ -60,6 +60,7 @@ import {
   GET_TEAM_TIME_SERIES_PATH,
   GET_TEAM_WEBHOOK_KEY_PATH,
   GET_TEAM_AFFILIATE_DETAIL_PATH,
+  GET_ORG_BRANDING_PATH,
 } from "@/lib/api/paths"
 import { AffiliateLinkWithStats } from "@/lib/types/affiliate/affiliateLinkWithStats"
 import { AffiliatePaymentRow } from "@/lib/types/affiliate/affiliatePaymentRow"
@@ -123,6 +124,12 @@ export const API_CONFIG = {
     org: {
       path: GET_ORG,
       response: {} as ActionResult<Organization>,
+    },
+    branding: {
+      get: {
+        path: GET_ORG_BRANDING_PATH,
+        response: {} as ActionResult<{ showBranding: boolean }>,
+      },
     },
     affiliateLookup: {
       path: GET_AFFILIATE_LOOKUP_PATH,

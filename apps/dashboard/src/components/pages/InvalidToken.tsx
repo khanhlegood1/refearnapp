@@ -8,14 +8,14 @@ import { useAtomValue } from "jotai"
 import { themeCustomizationAtom } from "@/store/AuthCustomizationAtom"
 import { useContrastColor } from "@/hooks/useContrastColor"
 import { PoweredByBranding } from "@/components/ui-custom/PoweredByBranding"
+import { useBrandingPreference } from "@/hooks/useBrandingPreference"
 type Props = {
   orgId?: string
   isPreview?: boolean
   affiliate: boolean
   message?: string
-  plan: "FREE" | "PRO" | "ULTIMATE"
 }
-const InvalidToken = ({ isPreview, affiliate, message, plan }: Props) => {
+const InvalidToken = ({ orgId, isPreview, affiliate, message }: Props) => {
   const {
     backgroundColor,
     InvalidPrimaryCustomization,
@@ -23,6 +23,10 @@ const InvalidToken = ({ isPreview, affiliate, message, plan }: Props) => {
   } = useAtomValue(themeCustomizationAtom)
   const authCardStyle = useAuthCard(affiliate)
   const textColor = useContrastColor(backgroundColor)
+  const { showBranding, isLoading: brandingLoading } = useBrandingPreference(
+    orgId,
+    affiliate
+  )
   return (
     <div
       className={`relative min-h-screen flex items-center justify-center p-4 ${
@@ -88,7 +92,7 @@ const InvalidToken = ({ isPreview, affiliate, message, plan }: Props) => {
             </div>
           )}
         </Card>
-        {plan !== "ULTIMATE" && affiliate && (
+        {!brandingLoading && affiliate && showBranding && (
           <PoweredByBranding color={textColor} />
         )}
       </div>

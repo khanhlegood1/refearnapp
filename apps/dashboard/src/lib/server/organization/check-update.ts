@@ -40,8 +40,20 @@ export async function checkVersion(): Promise<ActionResult<UpdateInfo>> {
     const data = await res.json()
     const latestVersion = data.tag_name.replace("v", "")
 
-    // 2. Compare against DB, not package.json
-    const isNewer = latestVersion !== installedVersion
+    const latest = latestVersion.split(".").map(Number)
+    const installed = installedVersion.split(".").map(Number)
+
+    let isNewer = false
+    for (let i = 0; i < 3; i++) {
+      if (latest[i] > (installed[i] || 0)) {
+        isNewer = true
+        break
+      }
+      if (latest[i] < (installed[i] || 0)) {
+        isNewer = false
+        break
+      }
+    }
 
     return {
       ok: true,

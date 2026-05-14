@@ -14,11 +14,5 @@ export default async function EmailVerifiedPage() {
   if (!decoded) {
     redirect("/login")
   }
-  return (
-    <EmailVerified
-      orgId={decoded.activeOrgId}
-      affiliate={false}
-      plan={"ULTIMATE"}
-    />
-  )
+  return <EmailVerified orgId={decoded.activeOrgId} affiliate={false} />
 }

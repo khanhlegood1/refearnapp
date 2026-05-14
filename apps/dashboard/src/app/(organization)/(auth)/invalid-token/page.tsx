@@ -12,7 +12,7 @@ const InvalidTokenPage = async () => {
   await redirectIfAuthed()
   return (
     <>
-      <InvalidToken affiliate={false} plan={"ULTIMATE"} />
+      <InvalidToken affiliate={false} />
     </>
   )
 }

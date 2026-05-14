@@ -35,7 +35,6 @@ export default async function VerifySignupPage({ searchParams }: Props) {
       <InvalidToken
         affiliate={true}
         message="The signup link is invalid or expired."
-        plan={"ULTIMATE"}
       />
     )
   }

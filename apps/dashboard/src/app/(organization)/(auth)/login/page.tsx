@@ -13,7 +13,7 @@ const loginPage = async () => {
   await redirectIfAuthed()
   return (
     <>
-      <Login affiliate={false} plan={"ULTIMATE"} />
+      <Login affiliate={false} />
     </>
   )
 }

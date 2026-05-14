@@ -27,15 +27,18 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode
 }>) {
+  const UMAMI_ID = process.env.NEXT_PUBLIC_UMAMI_WEBSITE_ID
   return (
     <html lang="en">
       <body className={`${geistSans.variable} ${geistMono.variable}`}>
-        <Script
-          async
-          src="https://cloud.umami.is/script.js"
-          data-website-id="686006ca-0f3c-4030-ac69-8516be31096a"
-          strategy="afterInteractive"
-        />
+        {UMAMI_ID && (
+          <Script
+            async
+            src="https://cloud.umami.is/script.js"
+            data-website-id={UMAMI_ID}
+            strategy="afterInteractive"
+          />
+        )}
         <QueryProvider>{children}</QueryProvider>
         <Toaster />
         <Analytics />

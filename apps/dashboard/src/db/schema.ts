@@ -324,6 +324,7 @@ export const organization = pgTable(
       .default("LAST_CLICK"),
     currency: text("currency").$type<Currency>().notNull().default("USD"),
     isPrivate: boolean("is_private").notNull().default(false),
+    showBranding: boolean("show_branding").default(true).notNull(),
     programType: text("program_type")
       .$type<ProgramType>()
       .notNull()
