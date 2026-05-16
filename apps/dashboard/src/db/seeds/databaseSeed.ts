@@ -23,14 +23,14 @@ const INVOICE_REASONS = ["subscription_create"] as const
 const randomInt = (min: number, max: number) =>
   Math.floor(Math.random() * (max - min + 1)) + min
 
-const randomDateIn2025 = () => {
+const randomDateIn2026 = () => {
   const month = randomInt(0, 11) // JS months 0–11
   const day = randomInt(1, 28) // safe for all months
   const hour = randomInt(0, 23)
   const minute = randomInt(0, 59)
   const second = randomInt(0, 59)
 
-  return new Date(Date.UTC(2025, month, day, hour, minute, second))
+  return new Date(Date.UTC(2026, month, day, hour, minute, second))
 }
 
 export const affiliate_seed = Array.from({ length: 20 }, (_, i) => {
@@ -51,8 +51,8 @@ export const affiliate_seed = Array.from({ length: 20 }, (_, i) => {
   }
 })
 export const affiliate_link_seed = affiliate_seed.flatMap((affiliate) => {
-  const firstDate = randomDateIn2025()
-  const secondDate = randomDateIn2025()
+  const firstDate = randomDateIn2026()
+  const secondDate = randomDateIn2026()
 
   return [
     {
@@ -75,7 +75,7 @@ export const affiliate_click_seed = affiliate_link_seed.flatMap((link) => {
   const clicksCount = randomInt(1, 4)
 
   return Array.from({ length: clicksCount }, () => {
-    const date = randomDateIn2025()
+    const date = randomDateIn2026()
 
     return {
       id: generateAffiliateClickId(),
@@ -96,7 +96,7 @@ export const affiliate_invoice_seed = affiliate_link_seed.flatMap((link) => {
   const invoiceCount = randomInt(1, 2)
 
   return Array.from({ length: invoiceCount }, () => {
-    const date = randomDateIn2025()
+    const date = randomDateIn2026()
     const amount = randomInt(10, 100)
     const commission = Math.round(amount * 0.5 * 100) / 100 // 50%
 
@@ -125,7 +125,7 @@ export const organization_seed = [
   {
     id: "tp7JLBb5",
     name: "Acme Inc",
-    websiteUrl: "better-auth-pi.vercel.app",
+    websiteUrl: "simulator.test",
     userId: "29022934-eb52-49af-aca4-b6ed553c89dd",
     logoUrl: null,
     referralParam: "ref" as const,
@@ -188,7 +188,7 @@ export const promotion_codes_seed = affiliate_seed.flatMap((affiliate, idx) => {
     affiliateId: affiliate.id,
     organizationId: ORG_ID,
     isSeenByAffiliate: i > 5,
-    createdAt: randomDateIn2025(),
+    createdAt: randomDateIn2026(),
     updatedAt: new Date(),
   }))
 })
@@ -199,7 +199,7 @@ export const referrals_seed = affiliate_seed.flatMap((affiliate, idx) => {
 
   return Array.from({ length: count }, (_, i) => {
     const isConverted = i % 3 === 0
-    const signedAt = randomDateIn2025()
+    const signedAt = randomDateIn2026()
 
     return {
       id: crypto.randomUUID(),
