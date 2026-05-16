@@ -2,7 +2,7 @@ import { Redis } from '@upstash/redis/cloudflare';
 import { shouldTrackRedis } from './shouldTrackRedis';
 import { getOrgSettings } from './getOrgSettings';
 import { beautifyReferrer } from './beautifyReferrer';
-import { handleScheduled } from './scheduled';
+import { handleScheduled, triggerWorkflow } from './scheduled';
 const BOT_REGEX = /bot|googlebot|crawler|spider|robot|crawling|facebookexternalhit|facebookcatalog/i;
 export default {
 	async fetch(request: Request, env: any, ctx: any): Promise<Response> {
@@ -15,6 +15,24 @@ export default {
 			return value?.toLowerCase() === 'true' || value === '1';
 		}
 		const isSelfHosted = isEnabled(env.IS_SELF_HOSTED);
+
+		// Handle the Virtual Simulator Route
+		const isSimulator = url.pathname.startsWith('/simulator');
+		if (env.ENVIRONMENT === 'development' && isSimulator) {
+			const SIMULATOR_URL = env.SIMULATOR_URL || 'http://localhost:3001';
+			return await fetch(`${SIMULATOR_URL}${url.pathname}${url.search}`, request);
+		}
+
+		// Handle the Tracking Script Proxying
+		const isTrackingScript =
+			url.pathname.endsWith('affiliateTrackingJavascript.js') || url.pathname.endsWith('affiliateTrackingJavascript.dev.js');
+		if (isTrackingScript) {
+			const scriptRequest = new Request(`${VERCEL_ORIGIN}${url.pathname}`, request);
+			const response = await fetch(scriptRequest);
+			const newResp = new Response(response.body, response);
+			newResp.headers.set('Access-Control-Allow-Origin', '*');
+			return newResp;
+		}
 		// 1. SPECIFIC PUBLIC ASSETS (Strict Whitelist)
 		// These are the files you manually put in /public
 		const publicAssets = [
@@ -182,7 +200,14 @@ export default {
 				data.os || 'unknown',
 				cleanUrl,
 			].join(':::');
-			ctx.waitUntil(Promise.all([redis.hincrby('sync_batch', aggKey, 1), redis.incr(usageKey), redis.expire(usageKey, 5184000)]));
+			ctx.waitUntil(
+				Promise.all([redis.hincrby('sync_batch', aggKey, 1), redis.incr(usageKey), redis.expire(usageKey, 5184000)]).then(() => {
+					if (env.ENVIRONMENT === 'development') {
+						console.log('🛠️ Dev Mode: Triggering instant sync...');
+						return triggerWorkflow('*/10 * * * *', env);
+					}
+				}),
+			);
 			return new Response(
 				JSON.stringify({
 					success: true,
@@ -216,7 +241,12 @@ export default {
 						redis.incr(`usage:total_signups:${org.ownerId}:${monthStr}`),
 						redis.hincrby(`stats:${org.orgId}:${dateStr}`, 'signups', 1),
 						redis.sadd(`sync:leads:${org.orgId}:${dateStr}`, `${email.toLowerCase()}:::${code}`),
-					]),
+					]).then(() => {
+						if (env.ENVIRONMENT === 'development') {
+							console.log('🛠️ Dev Mode: Triggering instant lead sync...');
+							return triggerWorkflow('*/10 * * * *', env);
+						}
+					}),
 				);
 
 				// Just return success, no Set-Cookie header needed!
@@ -237,7 +267,7 @@ export default {
 
 			if (type === 'sync') {
 				// We pass a mock event object to trick the handler
-				await handleScheduled({ cron: '*/5 * * * *' }, env, ctx);
+				await handleScheduled({ cron: '*/10 * * * *' }, env, ctx);
 				return new Response('Sync triggered manually', { status: 200 });
 			}
 

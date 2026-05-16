@@ -3,4 +3,7 @@ refearnapp.com, xyz.refearnapp.com, xmm.refearnapp.com, shipfast.refearnapp.com,
   reverse_proxy 127.0.0.1:3000
 }
 
-
+simulator.test {
+  tls internal
+  reverse_proxy localhost:3001
+}

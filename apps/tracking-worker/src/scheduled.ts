@@ -47,7 +47,7 @@ export async function handleScheduled(event: any, env: any, ctx: any) {
 	}
 }
 
-async function triggerWorkflow(cron: string, env: any) {
+export async function triggerWorkflow(cron: string, env: any) {
 	return fetch(`${env.MAIN_APP_URL}/api/workflows/sync`, {
 		method: 'POST',
 		headers: {
