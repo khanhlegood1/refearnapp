@@ -1,0 +1,425 @@
+---
+title: "How to Build an Affiliate Program in Next.js (The Clean Way)"
+description: "Skip the $100/month SaaS tax. Here's how to capture referral params, persist them in cookies, pass them to Stripe, and self-host your entire affiliate infrastructure with RefearnApp."
+date: "2026-05-18"
+image: "/blog/affiliate-program-nextjs.png"
+---
+
+import CodeBlock from '../../components/blog/CodeBlock.astro';
+import El from '../../components/blog/ArticleElements.astro';
+
+<section id="introduction" class="scroll-mt-28 space-y-4">
+
+  <h2 class="text-3xl font-black tracking-tight text-slate-900 mt-12 mb-6">Introduction</h2>
+
+  <El as="alert" type="warning">
+    You're shipping a Next.js SaaS. You want affiliates. You look at Rewardful — $49/month. FirstPromoter — $89/month. Impact — "contact sales." All of them to do one thing: track a `?ref=` query param and attribute a Stripe payment to it.
+  </El>
+
+  <p>
+    That's it. That's the core problem. You're paying three figures a month for a cookie and a dashboard.
+  </p>
+
+  <p>
+    This guide shows you how to implement affiliate tracking yourself — the right way — and introduces a free, self-hosted alternative that handles the rest of the infrastructure you don't want to build.
+  </p>
+
+</section>
+
+<hr class="border-slate-200" />
+
+<section id="core-logic" class="scroll-mt-28 space-y-4">
+
+  <h2 class="text-3xl font-black tracking-tight text-slate-900 mt-12 mb-6">
+    The Core Logic of Affiliate Tracking in Next.js
+  </h2>
+
+  <p>
+    Affiliate tracking boils down to three straightforward steps:
+  </p>
+
+  <El as="grid">
+    <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200">
+      <p class="text-xs uppercase font-bold text-slate-400 mb-1">Step 1</p>
+      <p class="text-xl font-black text-indigo-600">Capture</p>
+      <p class="text-xs text-slate-500 mt-1">
+        The ?ref= query parameter on landing
+      </p>
+    </div>
+
+    <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200">
+      <p class="text-xs uppercase font-bold text-slate-400 mb-1">Step 2</p>
+      <p class="text-xl font-black text-emerald-600">Persist</p>
+      <p class="text-xs text-slate-500 mt-1">
+        In a cookie to survive page navigation
+      </p>
+    </div>
+
+    <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200">
+      <p class="text-xs uppercase font-bold text-slate-400 mb-1">Step 3</p>
+      <p class="text-xl font-black text-amber-600">Pass</p>
+      <p class="text-xs text-slate-500 mt-1">
+        To Stripe Checkout during session creation
+      </p>
+    </div>
+  </El>
+
+  <h3 class="text-2xl font-bold tracking-tight text-slate-900 mt-8 mb-4">Capturing the Referral Param</h3>
+
+  <p>
+    In the <strong>Next.js App Router</strong>, you can't use
+    <code>useSearchParams</code> directly inside Server Components.
+    You have two clean paths to handle this execution layer:
+  </p>
+
+  <h4 class="text-lg font-bold mt-6 mb-3">
+    Option A — Client Component with useSearchParams
+  </h4>
+
+  <p>
+    Create an invisible component that mounts on the client and reads the layout context:
+  </p>
+
+  <CodeBlock
+    filename="components/RefTracker.tsx"
+    lang="tsx"
+    code={`'use client';
+
+        import { useSearchParams } from 'next/navigation';
+        import { useEffect } from 'react';
+        import Cookies from 'js-cookie';
+
+        export function RefTracker() {
+          const searchParams = useSearchParams();
+
+          useEffect(() => {
+            const ref = searchParams.get('ref');
+
+            if (ref) {
+              Cookies.set('affiliate_ref', ref, {
+                expires: 30,
+                sameSite: 'lax',
+                secure: process.env.NODE_ENV === 'production',
+              });
+            }
+          }, [searchParams]);
+
+          return null;
+        }`}
+  />
+
+  <p>
+    Drop this component straight into your root layout context,
+    keeping it safely wrapped in a Suspense boundary to avoid
+    breaking server-side rendering:
+  </p>
+
+  <CodeBlock
+    filename="app/layout.tsx"
+    lang="tsx"
+    code={`import { Suspense } from 'react';
+import { RefTracker } from '@/components/RefTracker';
+
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  return (
+    <html lang="en">
+      <body>
+        <Suspense fallback={null}>
+          <RefTracker />
+        </Suspense>
+
+                {children}
+              </body>
+            </html>
+          );
+        }`}
+  />
+
+  <h4 class="text-lg font-bold mt-6 mb-3">
+    Option B — Middleware (Zero Client JS)
+  </h4>
+
+  <p>
+    Alternatively, intercept the inbound request edge directly
+    using a Next.js middleware match pattern:
+  </p>
+
+  <CodeBlock
+    filename="middleware.ts"
+    lang="ts"
+    code={`import { NextRequest, NextResponse } from 'next/server';
+
+        export function middleware(request: NextRequest) {
+          const response = NextResponse.next();
+
+          const ref = request.nextUrl.searchParams.get('ref');
+
+          if (ref && !request.cookies.has('affiliate_ref')) {
+            response.cookies.set('affiliate_ref', ref, {
+              maxAge: 60 * 60 * 24 * 30,
+              sameSite: 'lax',
+              secure: process.env.NODE_ENV === 'production',
+            });
+          }
+
+          return response;
+        }
+
+        export const config = {
+          matcher: ['/((?!_next|api|favicon.ico).*)'],
+        };`}
+  />
+
+  <p>
+    <strong>Middleware is the better default choice here.</strong>
+    It functions entirely server-side, runs before pages even execute
+    their paint cycles, and eliminates runtime layout shift risks or
+    client-side hydration burdens.
+  </p>
+
+  <h3 class="text-2xl font-bold tracking-tight text-slate-900 mt-8 mb-4">Why a Cookie, Not localStorage?</h3>
+
+  <ul class="list-disc pl-6 space-y-3">
+    <li>
+      <strong>Server-Side Readability:</strong> Your Next.js Route
+      Handlers and Server Actions can access incoming cookies instantly
+      during a checkout call before rendering responses.
+    </li>
+
+    <li>
+      <strong>Path and Subdomain Scoping:</strong> Cookies can be
+      accessed seamlessly across root domains and subdomains alike.
+    </li>
+
+    <li>
+      <strong>Resilience to Redirects:</strong> Third-party payment
+      gateways like Stripe Checkout force external window re-routes.
+      Cookies safely survive full-page handoffs.
+    </li>
+  </ul>
+
+</section>
+
+<hr class="border-slate-200" />
+
+<section id="step-by-step-implementation" class="scroll-mt-28 space-y-4">
+
+  <h2 class="text-3xl font-black tracking-tight text-slate-900 mt-12 mb-6">
+    Step-by-Step Code Implementation
+  </h2>
+
+  <h3 class="text-2xl font-bold tracking-tight text-slate-900 mt-8 mb-4">
+    Step 1 — Full Ref Capture + Cookie (TypeScript)
+  </h3>
+
+  <CodeBlock
+    filename="middleware.ts"
+    lang="ts"
+    code={`import { NextRequest, NextResponse } from 'next/server';
+
+        const REF_COOKIE = 'affiliate_ref';
+        const REF_MAX_AGE = 60 * 60 * 24 * 30;
+
+        function isValidRef(ref: string): boolean {
+          return /^[a-zA-Z0-9-]{3,32}$/.test(ref);
+        }
+
+        export function middleware(request: NextRequest) {
+          const response = NextResponse.next();
+
+          const ref = request.nextUrl.searchParams.get('ref');
+
+          if (
+            ref &&
+            isValidRef(ref) &&
+            !request.cookies.has(REF_COOKIE)
+          ) {
+            response.cookies.set(REF_COOKIE, ref, {
+              maxAge: REF_MAX_AGE,
+              httpOnly: true,
+              sameSite: 'lax',
+              secure: process.env.NODE_ENV === 'production',
+              path: '/',
+            });
+          }
+
+          return response;
+        }`}
+  />
+
+  <h3 class="text-2xl font-bold tracking-tight text-slate-900 mt-8 mb-4">
+    Step 2 — Pass the Ref to Stripe Checkout
+  </h3>
+
+  <CodeBlock
+    filename="app/api/checkout/route.ts"
+    lang="ts"
+    code={`import { NextRequest, NextResponse } from 'next/server';
+import Stripe from 'stripe';
+
+const stripe = new Stripe(
+  process.env.STRIPE_SECRET_KEY!,
+  {
+    apiVersion: '2024-04-10',
+  }
+);
+
+        export async function POST(request: NextRequest) {
+          const affiliateRef =
+            request.cookies.get('affiliate_ref')?.value ?? null;
+
+          const session =
+            await stripe.checkout.sessions.create({
+              mode: 'subscription',
+
+              line_items: [
+                {
+                  price: process.env.STRIPE_PRICE_ID!,
+                  quantity: 1,
+                },
+              ],
+
+              success_url:
+                \`\${process.env.NEXT_PUBLIC_URL}/success?session_id={CHECKOUT_SESSION_ID}\`,
+
+              cancel_url:
+                \`\${process.env.NEXT_PUBLIC_URL}/pricing\`,
+
+              metadata: {
+                affiliate_ref: affiliateRef ?? '',
+              },
+            });
+
+          return NextResponse.json({
+            url: session.url,
+          });
+        }`}
+  />
+
+</section>
+
+<hr class="border-slate-200" />
+
+<section id="infrastructure-challenge" class="scroll-mt-28 space-y-4">
+
+  <h2 class="text-3xl font-black tracking-tight text-slate-900 mt-12 mb-6">
+    The Infrastructure Problem: Self-Hosting vs. SaaS
+  </h2>
+
+  <div class="w-full overflow-x-auto rounded-2xl border border-slate-200 shadow-sm mb-8">
+    <table class="min-w-[600px] w-full divide-y divide-slate-200 m-0 text-left">
+      <thead class="bg-slate-50">
+      <tr>
+        <th class="px-6 py-4 text-xs font-bold uppercase text-slate-500">
+          Feature Block
+        </th>
+
+        <th class="px-6 py-4 text-xs font-bold uppercase text-slate-500">
+          Custom Infrastructure
+        </th>
+
+        <th class="px-6 py-4 text-xs font-bold uppercase text-slate-500">
+          SaaS Platform Strategy
+        </th>
+      </tr>
+      </thead>
+
+      <tbody class="divide-y divide-slate-100 bg-white text-sm text-slate-600">
+      <tr>
+        <td class="px-6 py-4 font-bold text-slate-900">
+          Affiliate Portal
+        </td>
+
+        <td class="px-6 py-4">
+          High — Requires multi-tenant analytics UIs
+        </td>
+
+        <td class="px-6 py-4 text-red-600 font-semibold">
+          $49 - $99/mo subscriptions
+        </td>
+      </tr>
+
+      <tr>
+        <td class="px-6 py-4 font-bold text-slate-900">
+          Payout Engines
+        </td>
+
+        <td class="px-6 py-4">
+          Complex — Generating tax ledger lines
+        </td>
+
+        <td class="px-6 py-4 text-red-600 font-semibold">
+          Locked behind premium tiers
+        </td>
+      </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3 class="text-2xl font-bold tracking-tight text-slate-900 mt-8 mb-4">Enter RefearnApp</h3>
+
+  <El as="alert" type="success">
+    <h4 class="m-0 text-emerald-900 font-bold mb-2 text-lg">
+      Core Platform Benefits:
+    </h4>
+
+    <ul class="list-disc pl-5 space-y-1 text-emerald-950 text-sm">
+      <li>
+        <strong>Native Affiliate Dashboards:</strong>
+        Monitor conversion tracking metrics out of the box.
+      </li>
+
+      <li>
+        <strong>Full Data Sovereignty:</strong>
+        Hosted inside your private ecosystem.
+        No external script taxes.
+      </li>
+
+      <li>
+        <strong>Zero Monthly Fees:</strong>
+        Scale your referral systems horizontally
+        without operational pricing expansion.
+      </li>
+    </ul>
+  </El>
+
+</section>
+
+<hr class="border-slate-200" />
+
+<section id="conclusion" class="scroll-mt-28 space-y-4">
+
+  <h2 class="text-3xl font-black tracking-tight text-slate-900 mt-12 mb-6">
+    Conclusion & Next Steps
+  </h2>
+
+  <p>
+    Clone RefearnApp and mount your platform dashboard
+    in under five minutes:
+  </p>
+
+  <CodeBlock
+    lang="bash"
+    code={`git clone https://github.com/ZAK123DSFDF/refearnapp
+cd refearnapp
+
+        cp .env.example .env
+
+        pnpm install
+        pnpm dev`}
+  />
+
+  <p>
+    <a
+      href="https://github.com/ZAK123DSFDF/refearnapp"
+      class="font-semibold text-indigo-600 hover:text-indigo-500"
+    >
+      → Star and clone on GitHub
+    </a>
+  </p>
+
+</section>

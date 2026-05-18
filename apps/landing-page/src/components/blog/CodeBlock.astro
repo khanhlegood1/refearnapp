@@ -1,0 +1,51 @@
+---
+// src/components/blog/CodeBlock.astro
+import { Code } from 'astro:components';
+
+interface Props {
+  code: string;
+  lang: any;
+  filename?: string;
+}
+
+const { code, lang, filename } = Astro.props;
+---
+
+<div class="code-block-wrapper relative my-8 overflow-hidden rounded-2xl border border-slate-200 bg-slate-900 shadow-md">
+  {filename && (
+    <div class="flex items-center justify-between border-b border-slate-800 bg-slate-950 px-5 py-3">
+      <span class="font-mono text-xs font-semibold text-slate-400">{filename}</span>
+      <div class="flex items-center gap-3">
+        <span class="text-[10px] uppercase tracking-wider font-bold text-slate-600">{lang}</span>
+        <!-- Simple copy button -->
+        <button
+          class="copy-btn text-xs text-slate-400 hover:text-white transition-colors"
+          data-code={code}
+        >
+          Copy
+        </button>
+      </div>
+    </div>
+  )}
+  <div class="p-5 overflow-x-auto text-sm leading-relaxed text-slate-100">
+    <Code code={code} lang={lang} theme="github-dark" />
+  </div>
+</div>
+
+<script>
+  // This runs entirely on the client side with zero framework overhead
+  const buttons = document.querySelectorAll('.copy-btn');
+
+  buttons.forEach(button => {
+    button.addEventListener('click', async () => {
+      const code = button.getAttribute('data-code');
+      if (code) {
+        await navigator.clipboard.writeText(code);
+        button.textContent = 'Copied!';
+        setTimeout(() => {
+          button.textContent = 'Copy';
+        }, 2000);
+      }
+    });
+  });
+</script>

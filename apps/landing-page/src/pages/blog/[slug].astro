@@ -1,20 +1,21 @@
 ---
-import { getCollection } from 'astro:content';
 import BlogLayout from '../../layouts/BlogLayout.astro';
 import PricingCTA from '../../components/blog/PricingCTA';
 import Footer from '../../components/Footer.astro';
+import { getLocalBlogPosts } from '../../utils/blog'; // 👈 Import fetcher
+
 export async function getStaticPaths() {
-  const blogEntries = await getCollection('blog');
-  return blogEntries.map((entry) => ({
-    params: { slug: entry.slug },
+  const posts = await getLocalBlogPosts();
+  return posts.map((entry) => ({
+    params: { slug: entry.id },
     props: { entry },
   }));
 }
 
 const { entry } = Astro.props;
-const { Content, headings } = await entry.render();
+const Content = entry.Content; // 👈 Extract component directly
+const headings = entry.headings;
 
-// Filter for H2s to keep the Sidebar clean
 const sections = headings
   .filter((h) => h.depth === 2 || h.depth === 3)
   .map((h) => ({
@@ -34,9 +35,7 @@ const CDN_URL = 'https://assets.refearnapp.com';
     <time class="text-sm font-medium text-slate-500">{entry.data.date}</time>
   </header>
 
-  <div
-    class="mb-16 overflow-hidden rounded-xl border border-slate-200 bg-slate-50 shadow-sm"
-  >
+  <div class="mb-16 overflow-hidden rounded-xl border border-slate-200 bg-slate-50 shadow-sm">
     <img
       src={`${CDN_URL}${entry.data.image}`}
       alt={entry.data.title}
@@ -45,9 +44,10 @@ const CDN_URL = 'https://assets.refearnapp.com';
   </div>
 
   <div class="prose prose-slate prose-indigo max-w-none">
-    <Content />
+    <Content /> <!-- 👈 Render native element seamlessly -->
   </div>
 </BlogLayout>
+
 <div class="mx-auto max-w-7xl px-6 pb-24 lg:px-8">
   <PricingCTA client:load variant="footer" />
 </div>

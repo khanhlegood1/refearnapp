@@ -2,33 +2,25 @@
   "name": "@repo/landing-page",
   "type": "module",
   "version": "0.0.1",
+  "engines": {
+    "node": ">=22.12.0"
+  },
   "scripts": {
     "dev": "astro dev",
     "build": "astro build",
     "preview": "astro preview",
     "astro": "astro"
   },
-  "dependencies": {
-    "@astrojs/cloudflare": "13.1.10",
-    "@astrojs/mdx": "^5.0.3",
-    "@astrojs/react": "^5.0.2",
-    "@astrojs/vue": "^5.1.4",
-    "@paddle/paddle-js": "^1.6.1",
-    "@repo/paddle": "workspace:*",
-    "@tailwindcss/vite": "^4.1.18",
-    "@types/react": "^19.2.14",
-    "@types/react-dom": "^19.2.3",
-    "astro": "6.1.10",
-    "lucide-vue-next": "^1.0.0",
-    "react": "^19.2.4",
-    "react-dom": "^19.2.4",
-    "tailwind-animate": "^0.2.10",
-    "tailwindcss": "^4.1.18",
-    "vue": "^3.5.26"
-  },
   "devDependencies": {
-    "prettier": "^3.7.4",
-    "prettier-plugin-astro": "^0.14.1",
-    "prettier-plugin-tailwindcss": "^0.7.2"
+    "@astrojs/cloudflare": "^13.5.1",
+    "@astrojs/mdx": "^5.0.6",
+    "@astrojs/react": "^5.0.5",
+    "@astrojs/vue": "^6.0.1",
+    "@tailwindcss/vite": "^4.3.0",
+    "astro": "^6.3.3",
+    "react": "^19.2.6",
+    "react-dom": "^19.2.6",
+    "tailwindcss": "^4.0.0",
+    "vue": "^3.5.34"
   }
 }

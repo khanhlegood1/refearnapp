@@ -1,0 +1,57 @@
+---
+// src/components/blog/ArticleElements.astro
+interface Props {
+  as?: 'section' | 'heading' | 'subheading' | 'alert' | 'grid';
+  id?: string;
+  type?: 'warning' | 'success';
+}
+
+const { as = 'section', id, type } = Astro.props;
+---
+
+<!-- SECTION ELEMENT -->
+{as === 'section' && (
+<section id={id} class="scroll-mt-28 space-y-4">
+  <slot />
+</section>
+  )}
+
+<!-- MAIN SECTION HEADINGS (H2) -->
+{as === 'heading' && (
+<h2 class="text-3xl font-black tracking-tight text-slate-900 mt-12 mb-6">
+  <slot />
+</h2>
+  )}
+
+<!-- SUB-HEADINGS (H3) -->
+{as === 'subheading' && (
+<h3 class="text-2xl font-bold tracking-tight text-slate-900 mt-8 mb-4">
+  <slot />
+</h3>
+  )}
+
+<!-- COMPACT LAYOUT ALERT CALLOUTS -->
+{as === 'alert' && type === 'warning' && (
+<div class="bg-amber-50 border-l-4 border-amber-500 p-6 rounded-r-2xl my-8">
+  <div class="m-0 text-amber-900 leading-relaxed italic font-medium">
+    <slot />
+  </div>
+</div>
+  )}
+
+{as === 'alert' && type === 'success' && (
+<div class="bg-emerald-50 border-l-4 border-emerald-500 p-6 rounded-r-2xl my-8">
+  <div class="m-0 text-emerald-950 leading-relaxed text-sm">
+    <slot />
+  </div>
+</div>
+  )}
+
+<!-- STEP ARCHITECTURE GRID DISPLAY -->
+{as === 'grid' && (
+<div class="bg-slate-50 p-8 rounded-3xl border border-slate-100 my-8">
+  <div class="grid grid-cols-1 sm:grid-cols-3 gap-6 text-center">
+    <slot />
+  </div>
+</div>
+  )}

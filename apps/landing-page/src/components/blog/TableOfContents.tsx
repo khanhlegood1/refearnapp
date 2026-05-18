@@ -12,13 +12,35 @@ interface ToCProps {
   sections: Heading[];
 }
 
-const TableOfContents: React.FC<ToCProps> = ({ sections }) => {
+const TableOfContents: React.FC<ToCProps> = ({ sections:initialSections }) => {
   const [activeId, setActiveId] = useState<string>('');
   const [isOpen, setIsOpen] = useState(false);
+  const [sections, setSections] = useState<Heading[]>(initialSections || []);
 
   useEffect(() => {
+    // If Astro didn't provide headings, parse the actual DOM nodes dynamically
+    if (!initialSections || initialSections.length === 0) {
+      const elements = document.querySelectorAll('main article h2, main article h3');
+      const parsedHeadings: Heading[] = Array.from(elements).map((el) => {
+        // Ensure elements have a fallback slug ID if missing in markup
+        if (!el.id) {
+          el.id = el.textContent?.toLowerCase().replace(/[^a-z0-9]+/g, '-') || '';
+        }
+        return {
+          slug: el.id,
+          text: el.textContent || '',
+          level: parseInt(el.tagName.replace('H', ''), 10)
+        };
+      });
+      setSections(parsedHeadings);
+    }
+  }, [initialSections]);
+
+  useEffect(() => {
+    if (sections.length === 0) return;
+
     const observerOptions = {
-      rootMargin: '0px 0px -80% 0px',
+      rootMargin: '-10% 0px -70% 0px',
       threshold: 0,
     };
 
@@ -30,11 +52,11 @@ const TableOfContents: React.FC<ToCProps> = ({ sections }) => {
       });
     }, observerOptions);
 
-    document
-      .querySelectorAll('h2[id], h3[id]')
-      .forEach((section) => observer.observe(section));
+    const elements = document.querySelectorAll('main article h2, main article h3');
+    elements.forEach((el) => observer.observe(el));
+
     return () => observer.disconnect();
-  }, []);
+  }, [sections]);
 
   const handleClick = (e: React.MouseEvent<HTMLAnchorElement>, id: string) => {
     e.preventDefault();
