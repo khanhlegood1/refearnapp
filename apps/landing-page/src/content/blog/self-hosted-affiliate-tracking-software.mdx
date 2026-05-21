@@ -1,0 +1,549 @@
+---
+title: "Self-Hosted Affiliate Tracking Software for SaaS: Own Your Data, Own Your Growth"
+description: "Why third-party affiliate platforms lock you into their ecosystem, how affiliate tracking works under the hood, and how to run your own infrastructure with RefearnApp at zero monthly cost."
+date: "2025-05-21"
+image: "self-hosted-affiliate-tracking-software"
+imageExt: "png"
+tags: ["Tutorial", "Next.js", "Stripe"]
+---
+
+import CodeBlock from '../../components/blog/CodeBlock.astro';
+import El from '../../components/blog/ArticleElements.astro';
+import BlogImg from '../../components/blog/BlogImg.astro';
+
+<section id="introduction" class="scroll-mt-28 space-y-4">
+
+  <h2 class="text-3xl font-black tracking-tight text-slate-900 mt-12 mb-6">Introduction</h2>
+
+  <El as="alert" type="warning">
+    You're building a SaaS. You want affiliates.
+    You sign up for a third-party platform, paste in an embed snippet, and your program is live in 20 minutes.
+    Six months later you decide to switch tools — better pricing, a feature you need, or the platform gets acquired and the product direction changes. You export your CSV. And then you realize what you've actually lost.
+  </El>
+
+  <p>
+    The CSV has affiliate names, emails, and a payout history. What it doesn't have: the actual tracking infrastructure. The referral links are dead. The cookie logic lived on their servers. The conversion attribution pipeline is gone. You don't just migrate data — you rebuild from scratch. Every affiliate needs a new link. Every integration needs to be rewired. The "switch" that should take a weekend takes a month.
+  </p>
+
+  <p>
+    This is the core problem with third-party affiliate platforms that nobody writes about. It's not just the monthly fee. It's that switching costs compound invisibly until the day you try to leave.
+  </p>
+
+</section>
+
+<hr class="border-slate-200" />
+
+<section id="real-cost" class="scroll-mt-28 space-y-4">
+
+  <h2 class="text-3xl font-black tracking-tight text-slate-900 mt-12 mb-6">
+    The Real Cost of Third-Party Affiliate Platforms
+  </h2>
+
+  <h3 class="text-2xl font-bold tracking-tight text-slate-900 mt-8 mb-4">Your Data Is Theirs Until You Leave</h3>
+
+  <p>
+    When you run your affiliate program on a closed-source platform, your conversion events, click logs, affiliate relationships, and commission history all live in their database schema. You get access through their UI and, if you're lucky, a reasonably complete API.
+  </p>
+
+  <p>
+    The moment you stop paying, access is revoked. The CSV they give you is a snapshot — flat, denormalized, stripped of relational context. You lose:
+  </p>
+
+  <ul class="list-disc pl-6 space-y-3">
+    <li>
+      <strong>Click-level attribution data:</strong> Which specific link, which campaign, which landing page variant drove each conversion.
+    </li>
+    <li>
+      <strong>Time-series granularity:</strong> Daily click and conversion curves that let you spot seasonal patterns or campaign spikes.
+    </li>
+    <li>
+      <strong>Custom metadata:</strong> Any extra fields you attached to affiliate signups or conversion events.
+    </li>
+    <li>
+      <strong>The tracking layer itself:</strong> The referral link format, the cookie domain, the JavaScript snippet. All of it belongs to them.
+    </li>
+  </ul>
+
+  <blockquote>
+    You can export the ledger. You cannot export the engine.
+  </blockquote>
+
+  <h3 class="text-2xl font-bold tracking-tight text-slate-900 mt-8 mb-4">Switching Means Starting Over</h3>
+
+  <p>
+    Here's what a migration from a third-party affiliate platform actually looks like in practice:
+  </p>
+
+  <ul class="list-disc pl-6 space-y-3">
+    <li><strong>Referral links break immediately:</strong> Every affiliate has been sharing yourplatform.com/ref/affiliate-slug style links that route through the platform's redirect infrastructure. Those links die the moment you cancel. Your affiliates are now sending traffic to dead URLs.</li>
+    <li><strong>Attribution history is orphaned:</strong> Even if you have the CSV, your new system has no way to resolve historical conversions back to the correct affiliate unless you manually re-import and remap every record. Most platforms export commission totals, not the raw conversion events that produced them.</li>
+    <li><strong>Affiliate trust takes a hit:</strong> You have to email every active affiliate, explain the migration, give them new links, and ask them to update everything they've published — blog posts, YouTube descriptions, newsletters. Some won't. Those referrals are permanently lost.</li>
+    <li><strong>You rebuild the integration anyway:</strong> The Stripe webhook handler, the checkout metadata, the cookie capture logic — you write all of it fresh regardless of which new platform you move to. The only question is whether you're writing it to feed another third-party system or your own.</li>
+  </ul>
+
+  <BlogImg
+    post="self-hosted-affiliate-tracking-software"
+    num="1"
+    alt="Infographic comparing third-party lock-in migration pain timelines vs the clean RefearnApp self-hosted model with full control and seamless upgrades"
+  />
+
+  <h3 class="text-2xl font-bold tracking-tight text-slate-900 mt-8 mb-4">The Lock-In Is Structural, Not Accidental</h3>
+
+  <p>
+    This isn't a bug in how these platforms work. It's the business model. The harder you are to leave, the more pricing power they have over you. A platform that makes migration easy is a platform that competes on merit every renewal cycle. Most don't want that.
+  </p>
+
+  <p>
+    Self-hosted affiliate tracking software eliminates this dynamic entirely. Your data is in your database, in your schema, accessible to your queries. Your tracking logic is in your codebase. Switching tools means updating a config, not rebuilding an affiliate program.
+  </p>
+
+</section>
+
+<hr class="border-slate-200" />
+
+<section id="core-logic" class="scroll-mt-28 space-y-4">
+
+  <h2 class="text-3xl font-black tracking-tight text-slate-900 mt-12 mb-6">
+    How Affiliate Tracking Actually Works Under the Hood
+  </h2>
+
+  <p>
+    Before you self-host anything, you need a clear mental model of what "affiliate tracking" actually consists of. It's three distinct components:
+  </p>
+
+  <El as="grid">
+    <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200">
+      <p class="text-xs uppercase font-bold text-slate-400 mb-1">Step 1</p>
+      <p class="text-xl font-black text-indigo-600">Attribution</p>
+      <p class="text-xs text-slate-500 mt-1">
+        Capturing the Referral via query parameters on landing.
+      </p>
+    </div>
+
+    <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200">
+      <p class="text-xs uppercase font-bold text-slate-400 mb-1">Step 2</p>
+      <p class="text-xl font-black text-emerald-600">Conversion</p>
+      <p class="text-xs text-slate-500 mt-1">
+        Linking the paid checkout session to the referral cookie metadata.
+      </p>
+    </div>
+
+    <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200">
+      <p class="text-xs uppercase font-bold text-slate-400 mb-1">Step 3</p>
+      <p class="text-xl font-black text-amber-600">Confirmation</p>
+      <p class="text-xs text-slate-500 mt-1">
+        Webhook-Driven recording of raw subscription & invoice events.
+      </p>
+    </div>
+  </El>
+
+  <h3 class="text-2xl font-bold tracking-tight text-slate-900 mt-8 mb-4">1. Attribution — Capturing the Referral</h3>
+
+  <p>
+    When a visitor arrives via an affiliate link (<code>yourapp.com?ref=affiliate-slug</code>), something needs to capture that ref parameter and persist it until conversion. The standard approach: read the query param, write it to a cookie with a 30–90 day expiration.
+  </p>
+
+  <CodeBlock
+    filename="utils/attribution.ts"
+    lang="typescript"
+    code={`// Simplified attribution logic — runs when a visitor lands
+export function captureAffiliateRef(searchParams: URLSearchParams): void {
+  const ref = searchParams.get('ref');
+  if (!ref || !isValidSlug(ref)) return;
+
+      // Only set on first touch — first-click attribution
+      if (document.cookie.includes('affiliate_ref=')) return;
+
+      const maxAge = 60 * 60 * 24 * 30; // 30 days
+      document.cookie = \`affiliate_ref=\${encodeURIComponent(ref)}; max-age=\${maxAge}; path=/; SameSite=Lax\`;
+    }
+
+    function isValidSlug(slug: string): boolean {
+      return /^[a-zA-Z0-9][a-zA-Z0-9-]{1,39}$/.test(slug);
+    }`}
+  />
+
+  <p>
+    First-click attribution (shown above) gives credit to the first affiliate who drove the visit. The cookie isn't overwritten if it already exists. This is the most common and fair model for SaaS affiliate programs.
+  </p>
+
+  <h3 class="text-2xl font-bold tracking-tight text-slate-900 mt-8 mb-4">2. Conversion — Linking the Payment</h3>
+
+  <p>
+    When the user completes a paid action, you read the cookie and attach the affiliate reference to the payment event. With Stripe, this means passing it as session metadata at checkout creation, then reading it back in the webhook.
+  </p>
+
+  <CodeBlock
+    filename="app/api/checkout/route.ts"
+    lang="ts"
+    code={`import { NextRequest, NextResponse } from 'next/server';
+import Stripe from 'stripe';
+
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
+  apiVersion: '2024-11-20',
+});
+
+    export async function POST(request: NextRequest): Promise<NextResponse> {
+      // Read the affiliate cookie from the incoming request
+      const affiliateRef = request.cookies.get('affiliate_ref')?.value ?? null;
+
+      const sessionParams: Stripe.Checkout.SessionCreateParams = {
+        mode: 'subscription',
+        line_items: [{ price: process.env.STRIPE_PRICE_ID!, quantity: 1 }],
+        success_url: \`\${process.env.NEXT_PUBLIC_APP_URL}/dashboard?session_id={CHECKOUT_SESSION_ID}\`,
+        cancel_url: \`\${process.env.NEXT_PUBLIC_APP_URL}/pricing\`,
+      };
+
+      if (affiliateRef) {
+        // Attach to session — readable in checkout.session.completed webhook
+        sessionParams.metadata = { affiliate_ref: affiliateRef };
+
+        // Attach to subscription — readable on every invoice for recurring commissions
+        sessionParams.subscription_data = {
+          metadata: { affiliate_ref: affiliateRef },
+        };
+      }
+
+      const session = await stripe.checkout.sessions.create(sessionParams);
+      return NextResponse.json({ url: session.url });
+    }`}
+  />
+
+  <blockquote>
+    <strong>Why attach to both session and subscription?</strong> The checkout.session.completed event fires once. But if you're paying recurring commissions (e.g., 20% of every renewal), you need the ref on the subscription object so it's available on every invoice.payment_succeeded event going forward.
+  </blockquote>
+
+  <h3 class="text-2xl font-bold tracking-tight text-slate-900 mt-8 mb-4">3. Confirmation — Webhook-Driven Commission Recording</h3>
+
+  <p>
+    Never trust the client-side success page for conversion confirmation. Users close tabs, skip redirects, or hit back. The Stripe webhook is the authoritative signal.
+  </p>
+
+  <CodeBlock
+    filename="app/api/webhooks/stripe/route.ts"
+    lang="ts"
+    code={`import { NextRequest, NextResponse } from 'next/server';
+import Stripe from 'stripe';
+
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
+  apiVersion: '2024-11-20',
+});
+
+    export async function POST(request: NextRequest): Promise<NextResponse> {
+      const body = await request.text();
+      const sig = request.headers.get('stripe-signature');
+
+      if (!sig) return NextResponse.json({ error: 'No signature' }, { status: 400 });
+
+      let event: Stripe.Event;
+      try {
+        event = stripe.webhooks.constructEvent(body, sig, process.env.STRIPE_WEBHOOK_SECRET!);
+      } catch {
+        return NextResponse.json({ error: 'Invalid signature' }, { status: 400 });
+      }
+
+      // Initial conversion
+      if (event.type === 'checkout.session.completed') {
+        const session = event.data.object as Stripe.Checkout.Session;
+        const ref = session.metadata?.affiliate_ref;
+
+        if (ref && session.amount_total) {
+          await db.affiliateConversion.create({
+            data: {
+              affiliateSlug: ref,
+              stripeSessionId: session.id,
+              stripeCustomerId: session.customer as string,
+              amountCents: session.amount_total,
+              commissionCents: Math.floor(session.amount_total * 0.2), // 20% commission
+              status: 'pending',
+              convertedAt: new Date(),
+            },
+          });
+        }
+      }
+
+      // Recurring commissions
+      if (event.type === 'invoice.payment_succeeded') {
+        const invoice = event.data.object as Stripe.Invoice;
+        const sub = await stripe.subscriptions.retrieve(invoice.subscription as string);
+        const ref = sub.metadata?.affiliate_ref;
+
+        if (ref && invoice.amount_paid) {
+          await db.affiliateCommission.create({
+            data: {
+              affiliateSlug: ref,
+              stripeInvoiceId: invoice.id,
+              amountCents: invoice.amount_paid,
+              commissionCents: Math.floor(invoice.amount_paid * 0.2),
+              type: 'recurring',
+              status: 'pending',
+              paidAt: new Date(),
+            },
+          });
+        }
+      }
+
+      return NextResponse.json({ received: true });
+    }`}
+  />
+
+  <BlogImg
+    post="self-hosted-affiliate-tracking-software"
+    num="2"
+    alt="3-stage technical data flow chart mapping cookie-level attribution, metadata injection inside checkout route, and final Stripe webhook execution loops"
+  />
+
+  <h3 class="text-2xl font-bold tracking-tight text-slate-900 mt-8 mb-4">The Database Schema You Actually Own</h3>
+
+  <p>
+    This is what your data looks like when it lives in your own Postgres instance — queryable, JOIN-able, fully yours:
+  </p>
+
+  <CodeBlock
+    filename="prisma/schema.sql"
+    lang="sql"
+    code={`-- Affiliates
+CREATE TABLE affiliates (
+  id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  slug            TEXT UNIQUE NOT NULL,        -- The ?ref= value
+  name            TEXT NOT NULL,
+  email           TEXT UNIQUE NOT NULL,
+  commission_rate NUMERIC(5,4) DEFAULT 0.20,  -- 20%
+  created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+    -- One-time conversions
+    CREATE TABLE affiliate_conversions (
+      id                   UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      affiliate_id         UUID NOT NULL REFERENCES affiliates(id),
+      stripe_session_id    TEXT UNIQUE NOT NULL,
+      stripe_customer_id   TEXT NOT NULL,
+      amount_cents         INTEGER NOT NULL,
+      commission_cents     INTEGER NOT NULL,
+      status               TEXT NOT NULL DEFAULT 'pending', -- pending | paid | reversed
+      converted_at         TIMESTAMPTZ NOT NULL,
+      paid_at              TIMESTAMPTZ
+    );
+
+    -- Recurring commission events
+    CREATE TABLE affiliate_commissions (
+      id               UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      affiliate_id     UUID NOT NULL REFERENCES affiliates(id),
+      stripe_invoice_id TEXT UNIQUE NOT NULL,
+      amount_cents     INTEGER NOT NULL,
+      commission_cents INTEGER NOT NULL,
+      type             TEXT NOT NULL DEFAULT 'recurring',
+      status           TEXT NOT NULL DEFAULT 'pending',
+      paid_at          TIMESTAMPTZ NOT NULL
+    );
+
+    CREATE INDEX idx_conversions_affiliate ON affiliate_conversions(affiliate_id);
+    CREATE INDEX idx_commissions_affiliate ON affiliate_commissions(affiliate_id);
+    CREATE INDEX idx_conversions_status ON affiliate_conversions(status);`}
+  />
+
+  <p>
+    When your data is in a schema you control, cross-referencing affiliate performance against churn, LTV, or plan type is a SQL query, not a support ticket.
+  </p>
+
+</section>
+
+<hr class="border-slate-200" />
+
+<section id="infrastructure-challenge" class="scroll-mt-28 space-y-4">
+
+  <h2 class="text-3xl font-black tracking-tight text-slate-900 mt-12 mb-6">
+    The Build-vs-Deploy Calculation
+  </h2>
+
+  <p>
+    Here's the honest breakdown of what building affiliate tracking yourself actually costs vs. utilizing ready-made systems:
+  </p>
+
+  <div class="w-full overflow-x-auto rounded-2xl border border-slate-200 shadow-sm mb-8">
+    <table class="min-w-[600px] w-full divide-y divide-slate-200 m-0 text-left">
+      <thead class="bg-slate-50">
+      <tr>
+        <th class="px-6 py-4 text-xs font-bold uppercase text-slate-500">Component</th>
+        <th class="px-6 py-4 text-xs font-bold uppercase text-slate-500">DIY Effort</th>
+        <th class="px-6 py-4 text-xs font-bold uppercase text-slate-500">Notes</th>
+      </tr>
+      </thead>
+      <tbody class="divide-y divide-slate-100 bg-white text-sm text-slate-600">
+      <tr>
+        <td class="px-6 py-4 font-bold text-slate-900">Cookie Capture Logic</td>
+        <td class="px-6 py-4">~1 hour</td>
+        <td class="px-6 py-4">Straightforward browser injection layer</td>
+      </tr>
+      <tr>
+        <td class="px-6 py-4 font-bold text-slate-900">Stripe Checkout Pass</td>
+        <td class="px-6 py-4">~2 hours</td>
+        <td class="px-6 py-4">Attaches directly to metadata blocks</td>
+      </tr>
+      <tr>
+        <td class="px-6 py-4 font-bold text-slate-900">Stripe Webhook Handler</td>
+        <td class="px-6 py-4">~2 hours</td>
+        <td class="px-6 py-4">State validation checking engine</td>
+      </tr>
+      <tr>
+        <td class="px-6 py-4 font-bold text-slate-900">Database Migrations</td>
+        <td class="px-6 py-4">~1 hour</td>
+        <td class="px-6 py-4">Basic relational layout schemas</td>
+      </tr>
+      <tr>
+        <td class="px-6 py-4 font-bold text-slate-900">Affiliate Portal UI</td>
+        <td class="px-6 py-4 text-red-600 font-semibold">80–150 hours</td>
+        <td class="px-6 py-4">Complex multi-tenant analytics dashboard</td>
+      </tr>
+      <tr>
+        <td class="px-6 py-4 font-bold text-slate-900">Payout Management Queue</td>
+        <td class="px-6 py-4 text-red-600 font-semibold">40–80 hours</td>
+        <td class="px-6 py-4">Approve, reject, ledger line handling UIs</td>
+      </tr>
+      <tr>
+        <td class="px-6 py-4 font-bold text-slate-900">Email Alerts Engine</td>
+        <td class="px-6 py-4 text-red-600 font-semibold">20–40 hours</td>
+        <td class="px-6 py-4">Lifecycle notification sequences</td>
+      </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p>
+    The tracking code is 8 hours of work. The surrounding infrastructure — the portal your affiliates actually log into, the payout queue, the notification emails — is where real time disappears. That's not a reason to use a third-party platform. It's a reason to use open-source self-hosted infrastructure that ships all of it already built.
+  </p>
+
+  <h3 class="text-2xl font-bold tracking-tight text-slate-900 mt-8 mb-4">Enter RefearnApp</h3>
+
+  <El as="alert" type="success">
+    <h4 class="m-0 text-emerald-900 font-bold mb-2 text-lg">
+      Core Platform Benefits:
+    </h4>
+    <ul class="list-disc pl-5 space-y-1 text-emerald-950 text-sm">
+      <li><strong>Affiliate Portal out of the box:</strong> Your affiliates get a real dashboard to track clicks, conversions, and metrics without you coding a line.</li>
+      <li><strong>Flexible Commission Engine:</strong> Handles configured percentage and flat-rate tracking metrics with subscription sync automatically.</li>
+      <li><strong>Full Data Sovereignty:</strong> Hosted directly in your Postgres instance inside your private cloud. You query, back up, or expand it easily.</li>
+      <li><strong>Zero Revenue Cut Taxes:</strong> Scale multi-tenant tracking platforms horizontally without paying recurring operational platform cuts.</li>
+    </ul>
+  </El>
+
+  <BlogImg
+    post="self-hosted-affiliate-tracking-software"
+    num="3"
+    alt="Comparison matrix breakdown highlighting structural data isolation risks in closed vendor clouds vs Postgres sovereignty under RefearnApp architecture"
+  />
+
+  <p>
+    The critical difference from third-party platforms: if you ever need to change tools, extend functionality, or migrate to a different payment processor, you're modifying TypeScript in a repo you own. Not starting over.
+  </p>
+
+</section>
+
+<hr class="border-slate-200" />
+
+<section id="deployment" class="scroll-mt-28 space-y-4">
+
+  <h2 class="text-3xl font-black tracking-tight text-slate-900 mt-12 mb-6">
+    Production Configuration & Deployment
+  </h2>
+
+  <p>
+    Because RefearnApp is a standard Next.js application, you can host your instance seamlessly alongside your core platform on platforms like Vercel, Railway, or Fly.io.
+  </p>
+
+  <p>
+    Once you have cloned your personal fork, copy the environment template file:
+  </p>
+
+  <CodeBlock
+    lang="bash"
+    code={`cp .env.example .env`}
+  />
+
+  <p>
+    Open your newly created <code>.env</code> file and configure your system connection strings. Make sure your production database URL points to your isolated or shared Postgres instance:
+  </p>
+
+  <CodeBlock
+    filename=".env"
+    lang="bash"
+    code={`DATABASE_URL="postgresql://user:password@host:5432/refearnapp"
+STRIPE_SECRET_KEY="sk_live_..."
+STRIPE_WEBHOOK_SECRET="whsec_..."
+NEXTAUTH_SECRET="your-super-secret-key-here"
+NEXT_PUBLIC_APP_URL="https://affiliates.yourapp.com"`}
+  />
+
+  <p>
+    With variables secured, initialize your database schema layouts using Drizzle/Prisma tools, compile the high-performance production build optimized for low-latency delivery, and boot the cluster:
+  </p>
+
+  <CodeBlock
+    lang="bash"
+    code={`# Install project dependencies
+pnpm install
+
+# Push schema layout structures directly to your Postgres DB
+pnpm db:push
+
+# Build and execute the production server build
+pnpm build
+pnpm start`}
+  />
+
+</section>
+<hr class="border-slate-200" />
+
+<section id="conclusion" class="scroll-mt-28 space-y-6">
+
+  <h2 class="text-3xl font-black tracking-tight text-slate-900 mt-12 mb-6">
+    Summary & Next Steps
+  </h2>
+
+  <p>
+    Third-party affiliate platforms don't just cost money. They cost optionality. The moment you decide to switch — and eventually you will — you discover that the real asset wasn't the dashboard or the payout UI. It was the tracking layer underneath: the referral links, the cookie logic, the attribution pipeline. All of it belongs to them.
+  </p>
+
+  <p>
+    Self-hosted affiliate tracking software means your referral links are on your domain, your conversion data is inside your database, and switching costs drop to near zero.
+  </p>
+
+  <p>
+    To start managing your payouts, monitoring referral lifecycles, and scaling custom multi-tenant affiliate portals without monthly limits, <strong>fork the repository to your own GitHub account</strong> and clone your personal fork:
+  </p>
+
+  <CodeBlock
+    lang="bash"
+    code={`# Clone your personal forked repository
+git clone https://github.com/your-username/refearnapp
+cd refearnapp
+
+# Set up local environment variables
+cp .env.example .env
+
+# Boot up the development server
+pnpm install
+pnpm dev`}
+  />
+
+  <div class="pt-4 flex flex-col sm:flex-row items-center gap-4">
+    <a
+      href="https://github.com/ZAK123DSFDF/refearnapp"
+      target="_blank"
+      rel="noopener noreferrer"
+      class="inline-flex items-center justify-center rounded-xl bg-indigo-600 px-5 py-3 text-sm font-bold text-white shadow-md shadow-indigo-500/10 transition-colors hover:bg-indigo-500"
+    >
+      Fork on GitHub
+    </a>
+
+    <a
+      href="https://github.com/ZAK123DSFDF/refearnapp"
+      target="_blank"
+      rel="noopener noreferrer"
+      class="inline-flex items-center text-sm font-bold text-slate-600 hover:text-indigo-600 transition-colors"
+    >
+      Star Repository →
+    </a>
+  </div>
+
+</section>
