@@ -1,0 +1,688 @@
+---
+title: "How to Track Stripe Coupons for Affiliates: A Complete Technical Guide"
+description: "Coupon-based affiliate tracking has no referral URLs, no cookies, and no client-side logic. Here's how to map Stripe promotion codes to affiliate IDs, handle webhooks correctly, and avoid the edge cases that break attribution in production."
+date: "2025-05-22"
+image: "stripe-coupon-affiliate-tracking"
+imageExt: "png"
+tags: ["Tutorial", "Next.js", "Stripe"]
+---
+
+import CodeBlock from '../../components/blog/CodeBlock.astro';
+import El from '../../components/blog/ArticleElements.astro';
+import BlogImg from '../../components/blog/BlogImg.astro';
+
+<section id="introduction" class="scroll-mt-28 space-y-4">
+
+  <h2 class="text-3xl font-black tracking-tight text-slate-900 mt-12 mb-6">How to Track Stripe Coupons for Affiliates: A Complete Technical Guide</h2>
+
+  <p>
+    Link-based affiliate tracking is straightforward: capture a <code>?ref=</code> param, set a cookie, read it at checkout. The mechanics are well-documented and the failure modes are predictable. If you are looking to build that foundational setup first, check out our guide on <a href="/blog/affiliate-program-nextjs" class="text-indigo-600 hover:text-indigo-800 underline font-medium">how to build a link-based affiliate program in Next.js</a>.
+  </p>
+
+  <p>
+    Coupon-based affiliate tracking is a different problem entirely. There are no referral URLs. No cookies. No client-side JavaScript involved in the attribution. A user finds a promo code in a YouTube description, navigates directly to your pricing page, types it in at checkout, and completes the purchase. The entire attribution chain lives inside Stripe — and the only way to capture it is server-side, via webhooks, after the payment is already confirmed.
+  </p>
+
+  <El as="alert" type="warning">
+    If you wire this up wrong, you lose conversions silently. No error. No log. Just a commission that never gets recorded.
+  </El>
+
+  <p>
+    This guide walks through the full implementation: schema design, Stripe object metadata, webhook parsing, and the edge cases that will burn you in production if you skip them.
+  </p>
+
+</section>
+
+<hr class="border-slate-200" />
+
+<section id="architecture-comparison" class="scroll-mt-28 space-y-4">
+
+  <h2 class="text-3xl font-black tracking-tight text-slate-900 mt-12 mb-6">Why Coupon Tracking Is Architecturally Different from Link Tracking</h2>
+
+  <p>With link-based tracking, the attribution happens before the payment:</p>
+
+  <blockquote>
+    User clicks affiliate link → cookie set → checkout → webhook confirms
+  </blockquote>
+
+  <p>With coupon-based tracking, the attribution happens during the payment, and you only learn about it after:</p>
+
+  <blockquote>
+    User navigates directly → types promo code at checkout → payment completes → webhook fires → you parse the coupon from the event
+  </blockquote>
+
+  <p>This distinction matters because:</p>
+
+  <ul class="list-disc pl-6 space-y-2">
+    <li>There's no pre-checkout state to inspect. You can't read a cookie or a session variable. The coupon the user typed is an opaque string until Stripe tells you about it.</li>
+    <li>The webhook is your only source of truth. If your webhook handler is wrong, buggy, or down during the event, the attribution is gone.</li>
+    <li>The mapping from coupon code to affiliate must be server-side. You cannot do this lookup in the browser.</li>
+  </ul>
+
+  <BlogImg
+    post="stripe-coupon-affiliate-tracking"
+    num="1"
+    alt="Side-by-side architecture comparison. Left panel labeled 'Link-Based Tracking': User click → ?ref= param captured → cookie set → Stripe Checkout → webhook confirms. Right panel labeled 'Coupon-Based Tracking': User navigates directly → enters promo code at Stripe Checkout → payment completes → Stripe webhook fires → server parses coupon → DB lookup maps code to affiliate → commission recorded. Dark slate background, indigo flow arrows, red highlight on 'webhook is the only attribution point' in the right panel."
+  />
+
+</section>
+
+<hr class="border-slate-200" />
+
+<section id="database-design" class="scroll-mt-28 space-y-4">
+
+  <h2 class="text-3xl font-black tracking-tight text-slate-900 mt-12 mb-6">The Database & Metadata Architecture</h2>
+
+  <p>You need two things to make coupon tracking work cleanly:</p>
+  <ol class="list-decimal pl-6 space-y-2">
+    <li>A local mapping table — links your affiliate IDs to their Stripe promotion code IDs</li>
+    <li>Metadata on the Stripe Coupon/Promotion Code object — so the affiliate ID travels with the Stripe object and is readable in webhook events without an extra DB round-trip</li>
+  </ol>
+
+  <h3 class="text-2xl font-bold tracking-tight text-slate-900 mt-8 mb-4">Local Mapping Table</h3>
+
+  <CodeBlock
+    filename="prisma/schema.sql"
+    lang="sql"
+    code={`-- Affiliates table (you likely already have this)
+CREATE TABLE affiliates (
+  id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  slug            TEXT UNIQUE NOT NULL,
+  name            TEXT NOT NULL,
+  email           TEXT UNIQUE NOT NULL,
+  commission_rate NUMERIC(5,4) NOT NULL DEFAULT 0.20,
+  created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+    -- One row per promotion code assigned to an affiliate
+    -- An affiliate can have multiple codes (e.g., different campaigns)
+    CREATE TABLE affiliate_coupon_codes (
+      id                    UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      affiliate_id          UUID NOT NULL REFERENCES affiliates(id) ON DELETE CASCADE,
+      stripe_coupon_id      TEXT NOT NULL,           -- e.g., "SUMMER20"
+      stripe_promotion_code_id TEXT,                 -- e.g., "promo_1ABC..."
+      code                  TEXT NOT NULL,           -- Human-readable code, e.g., "ZAK20"
+      discount_type         TEXT NOT NULL,           -- 'percentage' | 'fixed'
+      discount_value        NUMERIC(10,2) NOT NULL,  -- e.g., 20.00 (%) or 10.00 ($)
+      max_redemptions       INTEGER,                 -- NULL = unlimited
+      times_redeemed        INTEGER NOT NULL DEFAULT 0,
+      active                BOOLEAN NOT NULL DEFAULT true,
+      created_at            TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    );
+
+    -- Conversion events attributed via coupon
+    CREATE TABLE affiliate_coupon_conversions (
+      id                       UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      affiliate_id             UUID NOT NULL REFERENCES affiliates(id),
+      coupon_code_id           UUID NOT NULL REFERENCES affiliate_coupon_codes(id),
+      stripe_session_id        TEXT UNIQUE NOT NULL,
+      stripe_customer_id       TEXT NOT NULL,
+      stripe_subscription_id   TEXT,                -- NULL for one-time payments
+      amount_cents             INTEGER NOT NULL,
+      discount_applied_cents   INTEGER NOT NULL DEFAULT 0,
+      commission_cents         INTEGER NOT NULL,
+      status                   TEXT NOT NULL DEFAULT 'pending',  -- pending | approved | paid | reversed
+      converted_at             TIMESTAMPTZ NOT NULL,
+      paid_at                  TIMESTAMPTZ
+    );
+
+    CREATE INDEX idx_coupon_codes_affiliate ON affiliate_coupon_codes(affiliate_id);
+    CREATE INDEX idx_coupon_codes_stripe_coupon ON affiliate_coupon_codes(stripe_coupon_id);
+    CREATE INDEX idx_coupon_codes_promo_id ON affiliate_coupon_codes(stripe_promotion_code_id);
+    CREATE INDEX idx_coupon_conversions_affiliate ON affiliate_coupon_conversions(affiliate_id);
+    CREATE INDEX idx_coupon_conversions_status ON affiliate_coupon_conversions(status);`}
+  />
+
+  <h3 class="text-2xl font-bold tracking-tight text-slate-900 mt-8 mb-4">Creating the Stripe Coupon with Affiliate Metadata</h3>
+
+  <p>
+    When you create a coupon for an affiliate, embed the affiliate ID directly into the Stripe object's metadata field. This is critical — it means your webhook handler can attribute the sale without a DB lookup on the hot path.
+  </p>
+
+  <CodeBlock
+    filename="lib/stripe/create-affiliate-coupon.ts"
+    lang="typescript"
+    code={`// lib/stripe/create-affiliate-coupon.ts
+import Stripe from 'stripe';
+
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
+  apiVersion: '2024-11-20',
+});
+
+    interface CreateAffiliateCouponParams {
+      affiliateId: string;
+      affiliateSlug: string;
+      code: string;                          // e.g., "ZAK20"
+      percentOff?: number;                   // e.g., 20 for 20% off
+      amountOff?: number;                    // in cents, e.g., 1000 for $10 off
+      currency?: string;                     // required if amountOff is set
+      maxRedemptions?: number;               // omit for unlimited
+      durationInMonths?: number;             // for 'repeating' duration
+    }
+
+    export async function createAffiliateCoupon(
+      params: CreateAffiliateCouponParams,
+    ): Promise<{ couponId: string; promotionCodeId: string }> {
+      const {
+        affiliateId,
+        affiliateSlug,
+        code,
+        percentOff,
+        amountOff,
+        currency = 'usd',
+        maxRedemptions,
+        durationInMonths,
+      } = params;
+
+      if (!percentOff && !amountOff) {
+        throw new Error('Either percentOff or amountOff must be provided');
+      }
+
+      // Step 1: Create the underlying Stripe Coupon
+      const coupon = await stripe.coupons.create({
+        ...(percentOff ? { percent_off: percentOff } : {}),
+        ...(amountOff ? { amount_off: amountOff, currency } : {}),
+        duration: durationInMonths ? 'repeating' : 'once',
+        ...(durationInMonths ? { duration_in_months: durationInMonths } : {}),
+        metadata: {
+          affiliate_id: affiliateId,
+          affiliate_slug: affiliateSlug,
+          source: 'refearnapp',
+        },
+      });
+
+      // Step 2: Create a Promotion Code on top of the Coupon
+      // Promotion Codes are what users actually type at checkout
+      const promotionCode = await stripe.promotionCodes.create({
+        coupon: coupon.id,
+        code,                                // The human-readable code, e.g., "ZAK20"
+        ...(maxRedemptions ? { max_redemptions: maxRedemptions } : {}),
+        metadata: {
+          affiliate_id: affiliateId,
+          affiliate_slug: affiliateSlug,
+          source: 'refearnapp',
+        },
+      });
+
+      return {
+        couponId: coupon.id,
+        promotionCodeId: promotionCode.id,
+      };
+    }`}
+  />
+
+  <h3 class="text-2xl font-bold tracking-tight text-slate-900 mt-8 mb-4">Why metadata on both the Coupon and the Promotion Code?</h3>
+
+  <p>
+    Stripe's data model has a subtle distinction: a Coupon is the discount rule (20% off), while a Promotion Code is the code users type (ZAK20). One Coupon can have multiple Promotion Codes. In the webhook, you'll receive the Promotion Code ID — but depending on how you query the event, you may only have the Coupon ID. Putting the affiliate metadata on both ensures you can recover the attribution either way.
+  </p>
+
+  <BlogImg
+    post="stripe-coupon-affiliate-tracking"
+    num="2"
+    alt="A clean entity diagram showing the Stripe object hierarchy. Top level: 'Stripe Coupon' (contains discount rules + affiliate metadata). Below it, connected by a one-to-many arrow: 'Stripe Promotion Codes' (one or more codes per coupon, each also with affiliate metadata). Below that: 'Checkout Session' (references the applied promotion code ID). Below that: 'Webhook Event' (checkout.session.completed). Dark slate background, monospaced field names, indigo connecting arrows."
+  />
+
+</section>
+
+<hr class="border-slate-200" />
+
+<section id="webhook-implementation" class="scroll-mt-28 space-y-4">
+
+  <h2 class="text-3xl font-black tracking-tight text-slate-900 mt-12 mb-6">The Webhook Implementation</h2>
+
+  <p>This is the critical path. Every production edge case lives here.</p>
+
+  <CodeBlock
+    filename="app/api/webhooks/stripe/route.ts"
+    lang="ts"
+    code={`// app/api/webhooks/stripe/route.ts
+import { NextRequest, NextResponse } from 'next/server';
+import Stripe from 'stripe';
+import { db } from '@/lib/db';
+
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
+  apiVersion: '2024-11-20',
+});
+
+    export async function POST(request: NextRequest): Promise<NextResponse> {
+      const body = await request.text();
+      const signature = request.headers.get('stripe-signature');
+
+      if (!signature) {
+        return NextResponse.json({ error: 'Missing stripe-signature header' }, { status: 400 });
+      }
+
+      let event: Stripe.Event;
+
+      try {
+        event = stripe.webhooks.constructEvent(
+          body,
+          signature,
+          process.env.STRIPE_WEBHOOK_SECRET!,
+        );
+      } catch (err) {
+        console.error('Webhook signature verification failed:', err);
+        return NextResponse.json({ error: 'Invalid signature' }, { status: 400 });
+      }
+
+      try {
+        switch (event.type) {
+          case 'checkout.session.completed':
+            await handleCheckoutCompleted(event.data.object as Stripe.Checkout.Session);
+            break;
+
+          case 'invoice.payment_succeeded':
+            await handleInvoicePaymentSucceeded(event.data.object as Stripe.Invoice);
+            break;
+
+          default:
+            // Acknowledge unhandled events — never return 4xx for unknown types
+            break;
+        }
+      } catch (err) {
+        // Return 500 so Stripe retries the webhook
+        console.error(\`Error processing webhook \${event.type}:\`, err);
+        return NextResponse.json({ error: 'Internal processing error' }, { status: 500 });
+      }
+
+      return NextResponse.json({ received: true });
+    }
+
+    async function handleCheckoutCompleted(
+      session: Stripe.Checkout.Session,
+    ): Promise<void> {
+      // Guard: only process paid sessions
+      if (session.payment_status !== 'paid') return;
+
+      // Guard: idempotency — don't double-record the same session
+      const existing = await db.affiliateCouponConversion.findUnique({
+        where: { stripeSessionId: session.id },
+      });
+      if (existing) return;
+
+      // Extract the applied promotion code from the session
+      const affiliateAttribution = await resolveAffiliateFromSession(session);
+      if (!affiliateAttribution) return; // No coupon applied, or not an affiliate code
+
+      const { affiliateId, couponCodeRecord, discountAppliedCents } = affiliateAttribution;
+
+      // Fetch the affiliate to get their commission rate
+      const affiliate = await db.affiliate.findUnique({
+        where: { id: affiliateId },
+      });
+      if (!affiliate) return;
+
+      const commissionCents = Math.floor(
+        (session.amount_total ?? 0) * Number(affiliate.commissionRate),
+      );
+
+      await db.affiliateCouponConversion.create({
+        data: {
+          affiliateId,
+          couponCodeId: couponCodeRecord.id,
+          stripeSessionId: session.id,
+          stripeCustomerId: session.customer as string,
+          stripeSubscriptionId: session.subscription as string | null,
+          amountCents: session.amount_total ?? 0,
+          discountAppliedCents,
+          commissionCents,
+          status: 'pending',
+          convertedAt: new Date(),
+        },
+      });
+
+      // Increment the redemption counter on the local record
+      await db.affiliateCouponCode.update({
+        where: { id: couponCodeRecord.id },
+        data: { timesRedeemed: { increment: 1 } },
+      });
+    }
+
+    async function handleInvoicePaymentSucceeded(
+      invoice: Stripe.Invoice,
+    ): Promise<void> {
+      // Only handle recurring subscription invoices, not the initial one
+      // (the initial invoice is already captured via checkout.session.completed)
+      if (invoice.billing_reason !== 'subscription_cycle') return;
+      if (!invoice.subscription) return;
+
+      // Look up the original conversion to find the affiliate
+      const originalConversion = await db.affiliateCouponConversion.findFirst({
+        where: { stripeSubscriptionId: invoice.subscription as string },
+        orderBy: { convertedAt: 'asc' },
+        include: { affiliate: true, couponCode: true },
+      });
+
+      if (!originalConversion) return;
+
+      // Check if the coupon still applies to this invoice
+      // Stripe stops applying coupons after their duration expires
+      const discountApplied = (invoice.discount?.coupon?.id)
+        ? await getCouponDiscountAmount(invoice)
+        : 0;
+
+      const commissionCents = Math.floor(
+        invoice.amount_paid * Number(originalConversion.affiliate.commissionRate),
+      );
+
+      await db.affiliateCouponConversion.create({
+        data: {
+          affiliateId: originalConversion.affiliateId,
+          couponCodeId: originalConversion.couponCodeId,
+          stripeSessionId: \`invoice_\${invoice.id}\`, // Synthetic ID for recurring events
+          stripeCustomerId: invoice.customer as string,
+          stripeSubscriptionId: invoice.subscription as string,
+          amountCents: invoice.amount_paid,
+          discountAppliedCents: discountApplied,
+          commissionCents,
+          status: 'pending',
+          convertedAt: new Date(),
+        },
+      });
+    }
+
+    /**
+     * Resolves affiliate attribution from a completed checkout session.
+     * Checks both total_details (for promotion codes applied at checkout)
+     * and session metadata (for coupons applied programmatically).
+     */
+    async function resolveAffiliateFromSession(session: Stripe.Checkout.Session): Promise<{
+      affiliateId: string;
+      couponCodeRecord: { id: string };
+      discountAppliedCents: number;
+    } | null> {
+      // Path 1: Promotion code applied by user at checkout
+      // Stripe exposes this in session.total_details.breakdown.discounts
+      const expandedSession = await stripe.checkout.sessions.retrieve(session.id, {
+        expand: ['total_details.breakdown.discounts'],
+      });
+
+      const discounts = expandedSession.total_details?.breakdown?.discounts ?? [];
+
+      for (const discount of discounts) {
+        const promoCodeId = (discount.discount as Stripe.Discount).promotion_code;
+        if (!promoCodeId) continue;
+
+        // Look up the promotion code in our local DB
+        const couponCodeRecord = await db.affiliateCouponCode.findUnique({
+          where: {
+            stripePromotionCodeId: typeof promoCodeId === 'string'
+              ? promoCodeId
+              : promoCodeId.id,
+          },
+        });
+
+        if (couponCodeRecord) {
+          return {
+            affiliateId: couponCodeRecord.affiliateId,
+            couponCodeRecord: { id: couponCodeRecord.id },
+            discountAppliedCents: discount.amount ?? 0,
+          };
+        }
+      }
+
+      // Path 2: Coupon applied programmatically (not via promotion code)
+      // Fall back to checking the coupon metadata directly
+      if (session.total_details?.breakdown?.discounts) {
+        for (const discount of session.total_details.breakdown.discounts) {
+          const couponId = (discount.discount as Stripe.Discount).coupon?.id;
+          if (!couponId) continue;
+
+          const couponCodeRecord = await db.affiliateCouponCode.findFirst({
+            where: { stripeCouponId: couponId },
+          });
+
+          if (couponCodeRecord) {
+            return {
+              affiliateId: couponCodeRecord.affiliateId,
+              couponCodeRecord: { id: couponCodeRecord.id },
+              discountAppliedCents: discount.amount ?? 0,
+            };
+          }
+        }
+      }
+
+      return null;
+    }
+
+    async function getCouponDiscountAmount(invoice: Stripe.Invoice): Promise<number> {
+      return Math.abs(
+        invoice.lines.data.reduce((total, line) => {
+          const discountAmounts = line.discount_amounts ?? [];
+          return total + discountAmounts.reduce((sum, d) => sum + d.amount, 0);
+        }, 0),
+      );
+    }`}
+  />
+
+  <BlogImg
+    post="stripe-coupon-affiliate-tracking"
+    num="3"
+    alt="A detailed webhook lifecycle diagram. Entry point: 'POST /api/webhooks/stripe'. First branch: 'Verify stripe-signature → reject if invalid (400)'. Second branch: 'Event type switch'. Branch A: 'checkout.session.completed → check idempotency → resolveAffiliateFromSession() → write conversion record'. Branch B: 'invoice.payment_succeeded → check billing_reason === subscription_cycle → look up original conversion → write recurring commission'. Exit: 'Return 200 { received: true }'. Return 500 on processing errors to trigger Stripe retry. Dark slate background, indigo decision nodes, amber highlight on the retry path."
+  />
+
+</section>
+
+<hr class="border-slate-200" />
+
+<section id="edge-cases" class="scroll-mt-28 space-y-4">
+
+  <h2 class="text-3xl font-black tracking-tight text-slate-900 mt-12 mb-6">Edge Cases to Handle in Production</h2>
+
+  <h3 class="text-2xl font-bold tracking-tight text-slate-900 mt-8 mb-4">1. Idempotency: Stripe Retries Webhooks</h3>
+  <p>
+    Stripe will retry a webhook up to 3 days if it doesn't receive a 2xx response. This means your handler will be called multiple times for the same event during outages or deploys. The idempotency guard at the top of handleCheckoutCompleted (checking for an existing record by stripeSessionId) prevents double-recording. Never skip this.
+  </p>
+
+  <CodeBlock
+    lang="ts"
+    code={`// Always check before writing
+const existing = await db.affiliateCouponConversion.findUnique({
+  where: { stripeSessionId: session.id },
+});
+if (existing) return; // Idempotent: already processed`}
+  />
+
+  <h3 class="text-2xl font-bold tracking-tight text-slate-900 mt-8 mb-4">2. Multi-Use vs. Single-Use Promotion Codes</h3>
+  <p>
+    Multi-use codes (shared publicly): one code used by many customers. Commission goes to the affiliate who owns the code. Standard case, handled by the implementation above.
+  </p>
+  <p>
+    Single-use codes (generated per-customer): one code per user, often used for personalized discounts or referral bonuses. If you generate these at scale, make sure your affiliate_coupon_codes table can handle the volume and your lookup index on stripe_promotion_code_id stays performant.
+  </p>
+  <p>
+    For single-use codes, enforce max_redemptions: 1 when creating the Promotion Code in Stripe:
+  </p>
+
+  <CodeBlock
+    lang="ts"
+    code={`const promotionCode = await stripe.promotionCodes.create({
+  coupon: coupon.id,
+  code: \`\${affiliateSlug.toUpperCase()}-\${crypto.randomUUID().slice(0, 8).toUpperCase()}\`,
+  max_redemptions: 1,   // Stripe enforces this server-side
+  metadata: { affiliate_id: affiliateId, affiliate_slug: affiliateSlug },
+});`}
+  />
+
+  <h3 class="text-2xl font-bold tracking-tight text-slate-900 mt-8 mb-4">3. Subscription Renewals vs. One-Time Payments</h3>
+  <p>
+    The checkout.session.completed event fires once per initial purchase. For subscriptions, subsequent renewals fire invoice.payment_succeeded with billing_reason: 'subscription_cycle'.
+  </p>
+  <p>
+    Key distinction: the first invoice for a subscription fires both checkout.session.completed AND invoice.payment_succeeded (with billing_reason: 'subscription_create'). If you handle both naively, you'll double-record the initial conversion. The guard billing_reason !== 'subscription_cycle' in handleInvoicePaymentSucceeded prevents this — only recurring renewals trigger that handler.
+  </p>
+
+  <h3 class="text-2xl font-bold tracking-tight text-slate-900 mt-8 mb-4">4. Coupon Duration vs. Commission Duration</h3>
+  <p>
+    A Stripe coupon with duration: 'once' only applies the discount to the first invoice. Your affiliate still deserves commissions on subsequent renewals even after the discount expires — unless your program explicitly limits commission windows. Handle this by looking up the original conversion via stripeSubscriptionId on every renewal, regardless of whether the coupon is still active on that invoice.
+  </p>
+
+  <h3 class="text-2xl font-bold tracking-tight text-slate-900 mt-8 mb-4">5. Refunds and Reversals</h3>
+  <p>
+    When a customer is refunded, listen to the charge.refunded event and mark the corresponding conversion as reversed:
+  </p>
+
+  <CodeBlock
+    lang="ts"
+    code={`case 'charge.refunded': {
+  const charge = event.data.object as Stripe.Charge;
+  if (charge.payment_intent) {
+    // Find the session associated with this payment intent
+    const sessions = await stripe.checkout.sessions.list({
+      payment_intent: charge.payment_intent as string,
+    });
+    if (sessions.data[0]) {
+      await db.affiliateCouponConversion.updateMany({
+        where: { stripeSessionId: sessions.data[0].id },
+        data: { status: 'reversed' },
+      });
+    }
+  }
+  break;
+}`}
+  />
+
+  <p>
+    Never pay out commissions with status: 'pending' or status: 'reversed'. Only pay status: 'approved'.
+  </p>
+
+</section>
+
+<hr class="border-slate-200" />
+
+<section id="build-vs-deploy" class="scroll-mt-28 space-y-4">
+
+  <h2 class="text-3xl font-black tracking-tight text-slate-900 mt-12 mb-6">The Build-vs-Deploy Calculation for Coupon Tracking</h2>
+
+  <div class="w-full overflow-x-auto rounded-2xl border border-slate-200 shadow-sm mb-8">
+    <table class="min-w-[600px] w-full divide-y divide-slate-200 m-0 text-left">
+      <thead class="bg-slate-50">
+      <tr>
+        <th class="px-6 py-4 text-xs font-bold uppercase text-slate-500">Component</th>
+        <th class="px-6 py-4 text-xs font-bold uppercase text-slate-500">DIY Effort</th>
+      </tr>
+      </thead>
+      <tbody class="divide-y divide-slate-100 bg-white text-sm text-slate-600">
+      <tr>
+        <td class="px-6 py-4 font-bold text-slate-900">Stripe coupon + promotion code creation</td>
+        <td class="px-6 py-4">~2 hours</td>
+      </tr>
+      <tr>
+        <td class="px-6 py-4 font-bold text-slate-900">Local DB schema + migrations</td>
+        <td class="px-6 py-4">~1 hour</td>
+      </tr>
+      <tr>
+        <td class="px-6 py-4 font-bold text-slate-900">Webhook handler with idempotency</td>
+        <td class="px-6 py-4">~3 hours</td>
+      </tr>
+      <tr>
+        <td class="px-6 py-4 font-bold text-slate-900">Recurring commission attribution</td>
+        <td class="px-6 py-4">~2 hours</td>
+      </tr>
+      <tr>
+        <td class="px-6 py-4 font-bold text-slate-900">Refund/reversal handling</td>
+        <td class="px-6 py-4">~1 hour</td>
+      </tr>
+      <tr>
+        <td class="px-6 py-4 font-bold text-slate-900">Affiliate-facing coupon dashboard</td>
+        <td class="px-6 py-4 text-red-600 font-semibold">40–80 hours</td>
+      </tr>
+      <tr>
+        <td class="px-6 py-4 font-bold text-slate-900">Admin UI to create and assign codes</td>
+        <td class="px-6 py-4 text-red-600 font-semibold">20–40 hours</td>
+      </tr>
+      <tr>
+        <td class="px-6 py-4 font-bold text-slate-900">Commission reporting per code</td>
+        <td class="px-6 py-4 text-red-600 font-semibold">20–40 hours</td>
+      </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p>
+    The webhook logic above is a weekend of work. The surrounding infrastructure — the UI to create and assign coupon codes to affiliates, the dashboard where affiliates see their code performance, the commission reporting broken down by code — is where real time goes.
+  </p>
+
+  <h3 class="text-2xl font-bold tracking-tight text-slate-900 mt-8 mb-4">Where RefearnApp Handles This Out of the Box</h3>
+  <p>
+    Building and maintaining this webhook pipeline is the kind of infrastructure work that looks simple until you're debugging a missed attribution at 2am because Stripe changed how it surfaces promotion code IDs in a new API version.
+  </p>
+  <p>
+    RefearnApp is an open-source, self-hosted affiliate tracking platform that ships coupon code tracking as a built-in feature alongside standard link-based referral tracking.
+  </p>
+
+  <p>What's already built:</p>
+  <ul class="list-disc pl-6 space-y-2">
+    <li><strong>Coupon code tracking</strong> — The Stripe webhook handler, promotion code resolution, and affiliate attribution pipeline described in this post are implemented and maintained in the RefearnApp codebase. You configure it, not build it.</li>
+    <li><strong>Affiliate portal</strong> — Affiliates log into their own dashboard and see performance broken down by their assigned coupon code: redemptions, revenue attributed, commission earned.</li>
+    <li><strong>Admin coupon management</strong> — Create and assign promotion codes to affiliates from the admin UI. No Stripe dashboard hunting required.</li>
+    <li><strong>Payout tracking</strong> — Approve or decline commissions at the affiliate level. Mark payouts as paid. Full commission history per affiliate.</li>
+    <li><strong>Zero revenue cut</strong> — Every dollar of commission goes to your affiliates. RefearnApp takes nothing.</li>
+    <li><strong>Your database, your schema</strong> — Data lives in your own Postgres instance. Direct SQL access. No CSV exports, no vendor lock-in.</li>
+  </ul>
+
+  <p>
+    If you're running both link-based and coupon-based affiliate programs simultaneously (common for SaaS — links for content creators, coupons for podcast sponsors), RefearnApp tracks both attribution paths in a unified dashboard.
+  </p>
+  <p>
+    For more on how referral link tracking works alongside coupons, see our guides on building an affiliate program in Next.js and self-hosted affiliate tracking software for SaaS.
+  </p>
+
+</section>
+
+<hr class="border-slate-200" />
+
+<section id="summary" class="scroll-mt-28 space-y-4">
+
+  <h2 class="text-3xl font-black tracking-tight text-slate-900 mt-12 mb-6">Summary</h2>
+  <p>Coupon-based affiliate tracking is a pure server-side problem. The key points:</p>
+  <ul class="list-disc pl-6 space-y-2">
+    <li>No cookies, no URL params. Attribution lives entirely in the Stripe webhook event.</li>
+    <li>Metadata on both Coupon and Promotion Code objects ensures you can recover the affiliate ID regardless of which Stripe object surfaces in the event.</li>
+    <li>Idempotency is non-negotiable. Stripe retries webhooks. Your handler will be called multiple times.</li>
+    <li>Subscription renewals need separate handling. checkout.session.completed handles the initial conversion; invoice.payment_succeeded with billing_reason: 'subscription_cycle' handles recurring commissions.</li>
+    <li>Refunds must reverse commissions. Never pay out on a conversion that's been refunded.</li>
+  </ul>
+
+  <p>
+    The implementation above is production-ready. If you'd rather not maintain it yourself, clone RefearnApp and get coupon tracking live alongside your full affiliate infrastructure in under 30 minutes.
+  </p>
+  <p>
+    To start managing your payouts, monitoring referral lifecycles, and scaling custom multi-tenant affiliate portals without monthly limits, <strong>fork the repository to your own GitHub account</strong> and clone your personal fork:
+  </p>
+
+  <CodeBlock
+    lang="bash"
+    code={`# Clone your personal forked repository
+git clone https://github.com/your-username/refearnapp
+cd refearnapp
+
+# Set up local environment variables
+cp .env.example .env
+
+# Boot up the development server
+pnpm install
+pnpm dev`}
+  />
+
+  <div class="pt-4 flex flex-col sm:flex-row items-center gap-4">
+    <a
+      href="https://github.com/ZAK123DSFDF/refearnapp"
+      target="_blank"
+      rel="noopener noreferrer"
+      class="inline-flex items-center justify-center rounded-xl bg-indigo-600 px-5 py-3 text-sm font-bold text-white shadow-md shadow-indigo-500/10 transition-colors hover:bg-indigo-500"
+    >
+      Fork on GitHub
+    </a>
+
+    <a
+      href="https://github.com/ZAK123DSFDF/refearnapp"
+      target="_blank"
+      rel="noopener noreferrer"
+      class="inline-flex items-center text-sm font-bold text-slate-600 hover:text-indigo-600 transition-colors"
+    >
+      Star Repository →
+    </a>
+  </div>
+</section>
