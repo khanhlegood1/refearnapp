@@ -1,0 +1,277 @@
+---
+title: "The Best Open Source Alternative to Rewardful: Why Self-Hosting Wins"
+description: "Rewardful's pricing compounds against you as your revenue grows. Here's the engineering case for self-hosting your affiliate tracking with RefearnApp — full Postgres access, zero monthly fees, and first-party attribution that ad-blockers can't touch."
+date: "2026-05-25"
+image: "open-source-alternative-to-rewardful"
+imageExt: "png"
+tags: ["Comparison", "Next.js", "Self-Hosted", "SaaS"]
+---
+
+import CodeBlock from '../../components/blog/CodeBlock.astro';
+import El from '../../components/blog/ArticleElements.astro';
+import BlogImg from '../../components/blog/BlogImg.astro';
+import GithubCta from '../../components/blog/GithubCta.astro';
+
+<section id="introduction" class="scroll-mt-28 space-y-4">
+
+  <h2 class="text-3xl font-black tracking-tight text-slate-900 mt-12 mb-6">The Best Open Source Alternative to Rewardful: Why Self-Hosting Wins</h2>
+
+  <p>
+    Rewardful starts at $49/month. That's before a single affiliate has driven a single dollar of revenue for your SaaS. As your Monthly Recurring Revenue (MRR) climbs, your plan requirement scales with it. The pricing is fundamentally structured to extract more cash from your margins precisely when your affiliate program is working. That is not a partnership—that is a toll booth on your own growth.
+  </p>
+
+  <p>
+    The developer community has already systematically broken this proprietary pattern in adjacent infrastructure categories. You don't pay Mixpanel when you can self-host PostHog. You don't pay a managed auth vendor when you can spin up Supabase. You don't pay for a black-box analytics SaaS when Plausible runs on a minimal VPS for the price of a single compute instance. The exact same architectural logic applies to affiliate tracking.
+  </p>
+
+  <El as="alert" type="warning">
+    Paying a compounding monthly subscription fee just to store your own conversion records behind a closed API is a legacy pattern. You should own your attribution data.
+  </El>
+
+  <p>
+    RefearnApp is the open-source, self-hostable affiliate management platform built to give developer-founders complete structural control without the monthly subscription tax. This guide covers the architectural advantages of self-hosting, the schema design, and how to deploy your instance in under 30 minutes.
+  </p>
+
+</section>
+
+<hr class="border-slate-200" />
+
+<section id="architecture-comparison" class="scroll-mt-28 space-y-4">
+
+  <h2 class="text-3xl font-black tracking-tight text-slate-900 mt-12 mb-6">Why the Architecture of Affiliate Tracking Belongs in Your Database</h2>
+
+  <p>
+    When you offload affiliate attribution to a closed-source platform, you introduce an operational blind spot. The core engineering arguments for pulling this data layer back into your own infrastructure are absolute:
+  </p>
+
+  <ul class="list-disc pl-6 space-y-2">
+    <li><strong>100% Data Sovereignty:</strong> Your conversion events, click logs, and commission histories live in your own database cluster. No API rate limits, no artificial data retention caps, and no export quotas.</li>
+    <li><strong>Zero Frontend Bloat:</strong> You stop injecting third-party JavaScript tracking scripts controlled by an external cloud provider into your client bundle. This eliminates an uncontrollable external dependency.</li>
+    <li><strong>Relational JOIN Performance:</strong> Because your affiliate tables live in your own Postgres database, cross-referencing affiliate conversions against internal user tables, specific plan upgrades, or churn metrics is a straightforward SQL query rather than a messy multi-platform API aggregation.</li>
+  </ul>
+
+  <BlogImg
+    post="open-source-alternative-to-rewardful"
+    num="1"
+    alt="Side-by-side architecture comparison. Left panel labeled 'Proprietary Cloud Tracking': Client browser loads external scripts → tracking cookies intercepted by privacy filters → analytics hidden inside a vendor's black-box database. Right panel labeled 'RefearnApp First-Party Tracking': Subdomain edge tracking runs on your own domain → bypasses privacy blockers → logs conversion events directly to your local Postgres instance. Dark slate background with indigo flow lines."
+  />
+
+</section>
+
+<hr class="border-slate-200" />
+
+<section id="database-design" class="scroll-mt-28 space-y-4">
+
+  <h2 class="text-3xl font-black tracking-tight text-slate-900 mt-12 mb-6">Feature Breakdown: Rewardful vs. RefearnApp</h2>
+
+  <p>
+    Choosing between a closed-source subscription and a self-hosted platform is an architectural decision. The table below outlines the core technical realities of both paradigms:
+  </p>
+
+  <div class="w-full overflow-x-auto rounded-2xl border border-slate-200 shadow-sm mb-8">
+    <table class="min-w-[600px] w-full divide-y divide-slate-200 m-0 text-left">
+      <thead class="bg-slate-50">
+      <tr>
+        <th class="px-6 py-4 text-xs font-bold uppercase text-slate-500">Feature</th>
+        <th class="px-6 py-4 text-xs font-bold uppercase text-slate-500">Rewardful</th>
+        <th class="px-6 py-4 text-xs font-bold uppercase text-slate-500">RefearnApp</th>
+      </tr>
+      </thead>
+      <tbody class="divide-y divide-slate-100 bg-white text-sm text-slate-600">
+      <tr>
+        <td class="px-6 py-4 font-bold text-slate-900">License</td>
+        <td class="px-6 py-4">Proprietary, Closed-Source</td>
+        <td class="px-6 py-4 text-indigo-600 font-semibold">Open-Source (MIT / AGPL-3.0)</td>
+      </tr>
+      <tr>
+        <td class="px-6 py-4 font-bold text-slate-900">Infrastructure</td>
+        <td class="px-6 py-4">Cloud-only managed black box</td>
+        <td class="px-6 py-4 text-indigo-600 font-semibold">Self-hosted via Docker / Coolify / VPS</td>
+      </tr>
+      <tr>
+        <td class="px-6 py-4 font-bold text-slate-900">Data Access</td>
+        <td class="px-6 py-4">Locked behind REST API & UI</td>
+        <td class="px-6 py-4 text-indigo-600 font-semibold">Full Postgres/SQL Access</td>
+      </tr>
+      <tr>
+        <td class="px-6 py-4 font-bold text-slate-900">Tracking Context</td>
+        <td class="px-6 py-4">Third-Party Network Scripts</td>
+        <td class="px-6 py-4 text-indigo-600 font-semibold">First-Party Subdomain Edge Workers</td>
+      </tr>
+      <tr>
+        <td class="px-6 py-4 font-bold text-slate-900">Ad-Blocker Vulnerability</td>
+        <td class="px-6 py-4 text-red-600 font-medium">High (Blocked by Brave, Safari ITP, uBlock)</td>
+        <td class="px-6 py-4 text-indigo-600 font-semibold">Zero (Runs as your own API endpoint)</td>
+      </tr>
+      <tr>
+        <td class="px-6 py-4 font-bold text-slate-900">Stripe Integration</td>
+        <td class="px-6 py-4">Built-in (External OAuth/Webhooks)</td>
+        <td class="px-6 py-4 text-indigo-600 font-semibold">Built-in (Native Metadata & Webhooks)</td>
+      </tr>
+      <tr>
+        <td class="px-6 py-4 font-bold text-slate-900">Pricing Model</td>
+        <td class="px-6 py-4">$49 to $299+/mo (Scales with revenue)</td>
+        <td class="px-6 py-4 text-indigo-600 font-semibold">Free (Pay only for your own infrastructure)</td>
+      </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3 class="text-2xl font-bold tracking-tight text-slate-900 mt-8 mb-4">The Underlying Database Schema</h3>
+  <p>
+    To illustrate the transparency of open source, here is the clean SQL structure used to manage tracking links, clicks, and affiliate mappings natively inside your PostgreSQL instance:
+  </p>
+
+  <CodeBlock
+    filename="prisma/schema.sql"
+    lang="sql"
+    code={`-- Base affiliate identity
+CREATE TABLE affiliates (
+  id           UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  slug         TEXT UNIQUE NOT NULL,
+  status       TEXT NOT NULL DEFAULT 'active',
+  created_at   TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+    -- First-party tracking links generated for affiliates
+    CREATE TABLE affiliate_links (
+      id           UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      affiliate_id UUID NOT NULL REFERENCES affiliates(id) ON DELETE CASCADE,
+      target_url   TEXT NOT NULL,
+      is_active    BOOLEAN NOT NULL DEFAULT true,
+      created_at   TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    );
+
+    -- Edge click analytics table
+    CREATE TABLE affiliate_clicks (
+      id           UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      affiliate_id UUID NOT NULL REFERENCES affiliates(id) ON DELETE CASCADE,
+      ip_address   TEXT,
+      user_agent   TEXT,
+      referrer     TEXT,
+      clicked_at   TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    );
+
+    CREATE INDEX idx_clicks_affiliate_id ON affiliate_clicks(affiliate_id);
+    CREATE INDEX idx_clicks_timestamp ON affiliate_clicks(clicked_at);`}
+  />
+
+</section>
+
+<hr class="border-slate-200" />
+
+<section id="tracking-blockers" class="scroll-mt-28 space-y-4">
+
+  <h2 class="text-3xl font-black tracking-tight text-slate-900 mt-12 mb-6">Bypassing Third-Party Tracking Blockers at the Infrastructure Layer</h2>
+
+  <p>
+    This is the silent point of failure that closed-source affiliate tracking platforms cannot easily fix due to their multitenant SaaS architectures.
+  </p>
+
+  <p>
+    When you load a traditional tracking script from an external domain like <code>rewardful.com</code> or <code>r.stripe.com</code>, browser-side privacy guards evaluate it in a third-party context. This has massive implications in modern developer workflows:
+  </p>
+
+  <ul class="list-disc pl-6 space-y-2">
+    <li><strong>uBlock Origin & Ad-Blockers:</strong> Categorically drop requests to known external tracking endpoints based on community blocklists, causing conversion data loss.</li>
+    <li><strong>Brave Browser:</strong> Explicitly blocks cross-site trackers and drops third-party storage access entirely before the script can evaluate the click identifier.</li>
+    <li><strong>Safari Intelligent Tracking Prevention (ITP):</strong> Aggressively caps the lifetime of cookies dropped by third-party tracking domains to 7 days, rendering later conversions completely invisible.</li>
+  </ul>
+
+  <p>
+    If your SaaS sells to developers, technical founders, or privacy-conscious creators, this silent blocking profile routinely wipes out <strong>30% to 40% of your valid affiliate attributions</strong>.
+  </p>
+
+  <h3 class="text-2xl font-bold tracking-tight text-slate-900 mt-8 mb-4">The Solution: First-Party Subdomain Tracking</h3>
+  <p>
+    By self-hosting your affiliate application, your tracking endpoint executes on your own infrastructure under a native subdomain (e.g., <code>tracking.yourdomain.com</code>). It routes tracking cookies and pixel beacons back to your own server context, making it indistinguishable from your application's core feature APIs.
+  </p>
+
+  <BlogImg
+    post="open-source-alternative-to-rewardful"
+    num="2"
+    ext="jpg"
+    alt="RefearnApp Main Admin Dashboard UI showing clean tracking statistics — affiliate list, conversion counts, commission totals, and click analytics in a dark-themed, minimal interface with indigo accents."
+  />
+
+</section>
+
+<hr class="border-slate-200" />
+
+<section id="tech-stack" class="scroll-mt-28 space-y-4">
+
+  <h2 class="text-3xl font-black tracking-tight text-slate-900 mt-12 mb-6">Core Tech Stack Alignment</h2>
+
+  <p>
+    Many open-source self-hosted applications create massive maintenance overhead because they are written using alien ecosystems or outdated design frameworks. RefearnApp completely bypasses this issue by aligning with the high-performance stacks modern developer-founders run.
+  </p>
+
+  <p>
+    The platform is explicitly designed with clean boundaries using type-safe engineering components:
+  </p>
+
+  <ul class="list-disc pl-6 space-y-2">
+    <li><strong>Frontend Framework:</strong> Next.js (App Router) and TypeScript—allowing for quick layout changes and uniform schema extensions without complex context switching.</li>
+    <li><strong>Server State Management:</strong> TanStack Query—delivering optimized caching, predictable data synchronization, and fast background panel revalidations out of the box.</li>
+    <li><strong>Database Layer:</strong> Drizzle ORM paired with PostgreSQL—enabling type-safe migrations and schema management matching your core software product code templates.</li>
+    <li><strong>High-Performance Tracking:</strong> Cloudflare Workers running at the network edge to manage low-latency click evaluations with zero cold-start bottlenecks.</li>
+  </ul>
+
+  <p>
+    For a deep dive into implementing server-side payment attribution directly over this architecture, read our complementary guide on <a href="/blog/stripe-coupon-affiliate-tracking" class="text-indigo-600 hover:text-indigo-800 underline font-medium">how to track Stripe coupons for affiliates</a>.
+  </p>
+
+</section>
+
+<hr class="border-slate-200" />
+
+<section id="deployment" class="scroll-mt-28 space-y-4">
+
+  <h2 class="text-3xl font-black tracking-tight text-slate-900 mt-12 mb-6">1-Click Deployment via Coolify</h2>
+
+  <p>
+    You do not need to spend hours managing raw infrastructure or writing complex system scripts to get your open-source tracking layer live. RefearnApp is optimized to run as a native, self-hosted service directly inside <strong>Coolify</strong>—giving you a Vercel-like Git-push or Docker-backed deployment pipeline on your own virtual private server (VPS).
+  </p>
+
+  <p>
+    To deploy, you simply add a new application inside your Coolify dashboard using our official image repository, map your tracking subdomain (e.g., <code>tracking.yourdomain.com</code>), and provide your core database configuration strings.
+  </p>
+
+  <h3 class="text-2xl font-bold tracking-tight text-slate-900 mt-8 mb-4">Required Environment Configuration</h3>
+  <p>
+    When launching your instance within Coolify, ensure your application resource variables are defined to establish the first-party secure connection context:
+  </p>
+
+  <CodeBlock
+    filename="Coolify Environment Variables"
+    lang="env"
+    code={`
+NEXT_PUBLIC_APP_URL=https://tracking.yourdomain.com
+DATABASE_URL=postgresql://user:password@your-postgres-host:5432/refearn
+
+# Stripe Webhook Synchronization Tokens
+STRIPE_SECRET_KEY=sk_live_51...
+STRIPE_WEBHOOK_SECRET=whsec_...`}
+  />
+
+  <p>
+    For a comprehensive, step-by-step walkthrough detailing server configuration, edge routing rules, and verification checklists, head straight over to our production guide.
+  </p>
+
+</section>
+<hr class="border-slate-200" />
+
+<section id="summary" class="scroll-mt-28 space-y-4">
+
+  <h2 class="text-3xl font-black tracking-tight text-slate-900 mt-12 mb-6">Conclusion: Take Control of Your Affiliate Data</h2>
+
+  <p>
+    Why pay a closed-source service to hold your conversion metrics hostage when you can manage the entire engine natively on infrastructure you already own?
+  </p>
+
+  <p>
+    Self-hosting your affiliate tracking layer saves significant platform costs as your program scales, helps you bypass user ad-blockers, and provides direct relational visibility over your marketing databases.
+  </p>
+
+  <GithubCta title="Ready to Build Without Subscription Limits?" />
+</section>

@@ -10,6 +10,7 @@ tags: ["Tutorial", "Next.js", "Stripe"]
 import CodeBlock from '../../components/blog/CodeBlock.astro';
 import El from '../../components/blog/ArticleElements.astro';
 import BlogImg from '../../components/blog/BlogImg.astro';
+import GithubCta from '../../components/blog/GithubCta.astro';
 
 <section id="introduction" class="scroll-mt-28 space-y-4">
 
@@ -508,42 +509,6 @@ pnpm start`}
     Self-hosted affiliate tracking software means your referral links are on your domain, your conversion data is inside your database, and switching costs drop to near zero.
   </p>
 
-  <p>
-    To start managing your payouts, monitoring referral lifecycles, and scaling custom multi-tenant affiliate portals without monthly limits, <strong>fork the repository to your own GitHub account</strong> and clone your personal fork:
-  </p>
-
-  <CodeBlock
-    lang="bash"
-    code={`# Clone your personal forked repository
-git clone https://github.com/your-username/refearnapp
-cd refearnapp
-
-# Set up local environment variables
-cp .env.example .env
-
-# Boot up the development server
-pnpm install
-pnpm dev`}
-  />
-
-  <div class="pt-4 flex flex-col sm:flex-row items-center gap-4">
-    <a
-      href="https://github.com/ZAK123DSFDF/refearnapp"
-      target="_blank"
-      rel="noopener noreferrer"
-      class="inline-flex items-center justify-center rounded-xl bg-indigo-600 px-5 py-3 text-sm font-bold text-white shadow-md shadow-indigo-500/10 transition-colors hover:bg-indigo-500"
-    >
-      Fork on GitHub
-    </a>
-
-    <a
-      href="https://github.com/ZAK123DSFDF/refearnapp"
-      target="_blank"
-      rel="noopener noreferrer"
-      class="inline-flex items-center text-sm font-bold text-slate-600 hover:text-indigo-600 transition-colors"
-    >
-      Star Repository →
-    </a>
-  </div>
+  <GithubCta title="Ready to Build Without Subscription Limits?" />
 
 </section>

@@ -1,0 +1,37 @@
+---
+
+interface Props {
+  title?: string;
+}
+
+const { title = "Take Control of Your Affiliate Data" } = Astro.props;
+const repoUrl = "https://github.com/ZAK123DSFDF/refearnapp";
+---
+
+<div class="my-8 rounded-2xl border border-slate-200 bg-slate-50/50 p-6 sm:p-8">
+  <h3 class="text-xl font-bold tracking-tight text-slate-900 m-0 mb-3">
+    {title}
+  </h3>
+
+  <p class="text-sm text-slate-600 m-0 mb-6">
+    RefearnApp is fully open-source, self-hostable, and AGPL-3.0 licensed. Ready to deploy? Skip the subscription fees and head straight over to our official step-by-step setup walkthrough.
+  </p>
+
+  <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-4">
+    <a
+      href="/docs"
+      class="inline-flex items-center justify-center rounded-xl bg-indigo-600 px-5 py-3 text-sm font-bold text-white shadow-md shadow-indigo-500/10 transition-colors hover:bg-indigo-500 text-center no-underline"
+    >
+      Read Deployment Docs →
+    </a>
+
+    <a
+      href={repoUrl}
+      target="_blank"
+      rel="noopener noreferrer"
+      class="inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white px-5 py-3 text-sm font-bold text-slate-700 shadow-sm transition-colors hover:bg-slate-50 hover:text-indigo-600 text-center no-underline"
+    >
+      Star Repository on GitHub
+    </a>
+  </div>
+</div>

@@ -10,6 +10,7 @@ tags: ["Tutorial", "Next.js", "Stripe"]
 import CodeBlock from '../../components/blog/CodeBlock.astro';
 import El from '../../components/blog/ArticleElements.astro';
 import BlogImg from '../../components/blog/BlogImg.astro';
+import GithubCta from '../../components/blog/GithubCta.astro';
 
 <section id="introduction" class="scroll-mt-28 space-y-4">
 
@@ -93,44 +94,43 @@ CREATE TABLE affiliates (
   commission_rate NUMERIC(5,4) NOT NULL DEFAULT 0.20,
   created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+-- One row per promotion code assigned to an affiliate
+-- An affiliate can have multiple codes (e.g., different campaigns)
+CREATE TABLE affiliate_coupon_codes (
+  id                    UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  affiliate_id          UUID NOT NULL REFERENCES affiliates(id) ON DELETE CASCADE,
+  stripe_coupon_id      TEXT NOT NULL,           -- e.g., "SUMMER20"
+  stripe_promotion_code_id TEXT,                 -- e.g., "promo_1ABC..."
+  code                  TEXT NOT NULL,           -- Human-readable code, e.g., "ZAK20"
+  discount_type         TEXT NOT NULL,           -- 'percentage' | 'fixed'
+  discount_value        NUMERIC(10,2) NOT NULL,  -- e.g., 20.00 (%) or 10.00 ($)
+  max_redemptions       INTEGER,                 -- NULL = unlimited
+  times_redeemed        INTEGER NOT NULL DEFAULT 0,
+  active                BOOLEAN NOT NULL DEFAULT true,
+  created_at            TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
 
-    -- One row per promotion code assigned to an affiliate
-    -- An affiliate can have multiple codes (e.g., different campaigns)
-    CREATE TABLE affiliate_coupon_codes (
-      id                    UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-      affiliate_id          UUID NOT NULL REFERENCES affiliates(id) ON DELETE CASCADE,
-      stripe_coupon_id      TEXT NOT NULL,           -- e.g., "SUMMER20"
-      stripe_promotion_code_id TEXT,                 -- e.g., "promo_1ABC..."
-      code                  TEXT NOT NULL,           -- Human-readable code, e.g., "ZAK20"
-      discount_type         TEXT NOT NULL,           -- 'percentage' | 'fixed'
-      discount_value        NUMERIC(10,2) NOT NULL,  -- e.g., 20.00 (%) or 10.00 ($)
-      max_redemptions       INTEGER,                 -- NULL = unlimited
-      times_redeemed        INTEGER NOT NULL DEFAULT 0,
-      active                BOOLEAN NOT NULL DEFAULT true,
-      created_at            TIMESTAMPTZ NOT NULL DEFAULT NOW()
-    );
+-- Conversion events attributed via coupon
+CREATE TABLE affiliate_coupon_conversions (
+  id                       UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  affiliate_id             UUID NOT NULL REFERENCES affiliates(id),
+  coupon_code_id           UUID NOT NULL REFERENCES affiliate_coupon_codes(id),
+  stripe_session_id        TEXT UNIQUE NOT NULL,
+  stripe_customer_id       TEXT NOT NULL,
+  stripe_subscription_id   TEXT,                -- NULL for one-time payments
+  amount_cents             INTEGER NOT NULL,
+  discount_applied_cents   INTEGER NOT NULL DEFAULT 0,
+  commission_cents         INTEGER NOT NULL,
+  status                   TEXT NOT NULL DEFAULT 'pending',  -- pending | approved | paid | reversed
+  converted_at             TIMESTAMPTZ NOT NULL,
+  paid_at                  TIMESTAMPTZ
+);
 
-    -- Conversion events attributed via coupon
-    CREATE TABLE affiliate_coupon_conversions (
-      id                       UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-      affiliate_id             UUID NOT NULL REFERENCES affiliates(id),
-      coupon_code_id           UUID NOT NULL REFERENCES affiliate_coupon_codes(id),
-      stripe_session_id        TEXT UNIQUE NOT NULL,
-      stripe_customer_id       TEXT NOT NULL,
-      stripe_subscription_id   TEXT,                -- NULL for one-time payments
-      amount_cents             INTEGER NOT NULL,
-      discount_applied_cents   INTEGER NOT NULL DEFAULT 0,
-      commission_cents         INTEGER NOT NULL,
-      status                   TEXT NOT NULL DEFAULT 'pending',  -- pending | approved | paid | reversed
-      converted_at             TIMESTAMPTZ NOT NULL,
-      paid_at                  TIMESTAMPTZ
-    );
-
-    CREATE INDEX idx_coupon_codes_affiliate ON affiliate_coupon_codes(affiliate_id);
-    CREATE INDEX idx_coupon_codes_stripe_coupon ON affiliate_coupon_codes(stripe_coupon_id);
-    CREATE INDEX idx_coupon_codes_promo_id ON affiliate_coupon_codes(stripe_promotion_code_id);
-    CREATE INDEX idx_coupon_conversions_affiliate ON affiliate_coupon_conversions(affiliate_id);
-    CREATE INDEX idx_coupon_conversions_status ON affiliate_coupon_conversions(status);`}
+CREATE INDEX idx_coupon_codes_affiliate ON affiliate_coupon_codes(affiliate_id);
+CREATE INDEX idx_coupon_codes_stripe_coupon ON affiliate_coupon_codes(stripe_coupon_id);
+CREATE INDEX idx_coupon_codes_promo_id ON affiliate_coupon_codes(stripe_promotion_code_id);
+CREATE INDEX idx_coupon_conversions_affiliate ON affiliate_coupon_conversions(affiliate_id);
+CREATE INDEX idx_coupon_conversions_status ON affiliate_coupon_conversions(status);`}
   />
 
   <h3 class="text-2xl font-bold tracking-tight text-slate-900 mt-8 mb-4">Creating the Stripe Coupon with Affiliate Metadata</h3>
@@ -648,41 +648,5 @@ if (existing) return; // Idempotent: already processed`}
   <p>
     The implementation above is production-ready. If you'd rather not maintain it yourself, clone RefearnApp and get coupon tracking live alongside your full affiliate infrastructure in under 30 minutes.
   </p>
-  <p>
-    To start managing your payouts, monitoring referral lifecycles, and scaling custom multi-tenant affiliate portals without monthly limits, <strong>fork the repository to your own GitHub account</strong> and clone your personal fork:
-  </p>
-
-  <CodeBlock
-    lang="bash"
-    code={`# Clone your personal forked repository
-git clone https://github.com/your-username/refearnapp
-cd refearnapp
-
-# Set up local environment variables
-cp .env.example .env
-
-# Boot up the development server
-pnpm install
-pnpm dev`}
-  />
-
-  <div class="pt-4 flex flex-col sm:flex-row items-center gap-4">
-    <a
-      href="https://github.com/ZAK123DSFDF/refearnapp"
-      target="_blank"
-      rel="noopener noreferrer"
-      class="inline-flex items-center justify-center rounded-xl bg-indigo-600 px-5 py-3 text-sm font-bold text-white shadow-md shadow-indigo-500/10 transition-colors hover:bg-indigo-500"
-    >
-      Fork on GitHub
-    </a>
-
-    <a
-      href="https://github.com/ZAK123DSFDF/refearnapp"
-      target="_blank"
-      rel="noopener noreferrer"
-      class="inline-flex items-center text-sm font-bold text-slate-600 hover:text-indigo-600 transition-colors"
-    >
-      Star Repository →
-    </a>
-  </div>
+  <GithubCta title="Ready to Build Without Subscription Limits?" />
 </section>
