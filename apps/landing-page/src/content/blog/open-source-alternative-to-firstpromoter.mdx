@@ -1,0 +1,360 @@
+---
+title: "The Best Open Source Alternative to FirstPromoter: Self-Host Your Affiliate Program"
+description: "FirstPromoter locks your affiliate data, charges per-affiliate fees, and makes migration painful. Here's the engineering case for self-hosting with RefearnApp — full Postgres access, zero monthly fees, and complete control over your affiliate infrastructure."
+date: "2025-06-01"
+image: "open-source-alternative-to-firstpromoter"
+imageExt: "png"
+tags: ["Open Source", "Affiliate", "SaaS", "Self-Hosted"]
+---
+
+import El from '../../components/blog/ArticleElements.astro';
+import BlogImg from '../../components/blog/BlogImg.astro';
+import GithubCta from '../../components/blog/GithubCta.astro';
+
+<section id="introduction" class="scroll-mt-28 space-y-4">
+
+  <h2 class="text-3xl font-black tracking-tight text-slate-900 mt-12 mb-6">The Best Open Source Alternative to FirstPromoter: Self-Host Your Affiliate Program</h2>
+
+  <p>
+    FirstPromoter starts at $89/month. That's before you've recruited a single affiliate, before anyone has clicked a referral link, before a single dollar of commission has been earned. You're paying $89/month for infrastructure that sits idle until your affiliate program actually works — and when it does work, FirstPromoter's pricing scales up against you.
+  </p>
+
+  <p>
+    The structure is familiar if you've looked at this category before: fixed base fee, plan limits on affiliate count and tracked revenue, and a migration story that requires rebuilding your entire tracking setup from scratch if you ever decide to leave. Your referral links run through their redirect infrastructure. Your conversion data lives in their database. Your affiliate relationships are managed through their portal.
+  </p>
+
+  <El as="alert" type="warning">
+    That's three critical dependencies on a vendor you're paying $89/month to trust.
+  </El>
+
+  <p>
+    The developer community has solved this problem in every adjacent category. You don't pay for hosted Grafana when you can run it yourself. You don't pay for managed Plausible when the self-hosted version is identical. You don't pay for hosted Supabase when Postgres runs on your own VPS for $6/month. The same logic applies to affiliate tracking — and the open-source tooling now exists to act on it.
+  </p>
+
+</section>
+
+<hr class="border-slate-200" />
+
+<section id="what-firstpromoter-charges" class="scroll-mt-28 space-y-4">
+
+  <h2 class="text-3xl font-black tracking-tight text-slate-900 mt-12 mb-6">What FirstPromoter Actually Charges You For</h2>
+
+  <p>
+    Before building the case for self-hosting, it's worth being precise about what FirstPromoter's pricing covers — because most of it is infrastructure you already own or can own cheaply.
+  </p>
+
+  <h3 class="text-2xl font-bold tracking-tight text-slate-900 mt-8 mb-4">What you're paying for</h3>
+
+  <ul class="list-disc pl-6 space-y-2">
+    <li>A hosted Postgres database containing your affiliate and conversion data</li>
+    <li>A redirect layer that handles your referral link routing</li>
+    <li>A dashboard UI for you and your affiliates</li>
+    <li>Stripe webhook handling and commission calculation logic</li>
+    <li>Email notifications when commissions are earned</li>
+  </ul>
+
+  <h3 class="text-2xl font-bold tracking-tight text-slate-900 mt-8 mb-4">What you're not getting</h3>
+
+  <ul class="list-disc pl-6 space-y-2">
+    <li>Access to your own data via SQL</li>
+    <li>The ability to modify commission logic without a feature request</li>
+    <li>Referral links on your own domain</li>
+    <li>Any path to migration that doesn't involve rebuilding your tracking layer</li>
+  </ul>
+
+  <El as="alert" type="info">
+    At $89/month, FirstPromoter costs $1,068/year. At their $129/month Business tier — which you'll hit as your affiliate program grows — that's $1,548/year. For infrastructure that would cost you $0 in incremental cost on a VPS you're already running.
+  </El>
+
+</section>
+
+<hr class="border-slate-200" />
+
+<section id="feature-breakdown" class="scroll-mt-28 space-y-4">
+
+  <h2 class="text-3xl font-black tracking-tight text-slate-900 mt-12 mb-6">Feature Breakdown: FirstPromoter vs. RefearnApp</h2>
+
+  <ul class="list-disc pl-6 space-y-4">
+    <li>
+      <strong>License:</strong> FirstPromoter is proprietary and closed-source — you see none of the code running your affiliate program. RefearnApp is AGPL-3.0 licensed — full source access, read it, fork it, modify it.
+    </li>
+    <li>
+      <strong>Infrastructure:</strong> FirstPromoter is cloud-only, managed entirely on their servers. RefearnApp self-hosts on Docker, Coolify, or any VPS — runs alongside your existing infrastructure.
+    </li>
+    <li>
+      <strong>Data Access:</strong> FirstPromoter locks your data behind their dashboard and a limited API. RefearnApp gives you direct Postgres access — JOIN your affiliate tables against your product tables any time you want.
+    </li>
+    <li>
+      <strong>Referral Links:</strong> FirstPromoter routes your referral links through their redirect infrastructure. RefearnApp runs referral tracking on your own domain — your links, your infrastructure, no third-party dependency.
+    </li>
+    <li>
+      <strong>Stripe Integration:</strong> FirstPromoter handles Stripe webhooks as a managed service you can't inspect. RefearnApp's Stripe integration is open source — you read the webhook handler, you understand exactly what it does.
+    </li>
+    <li>
+      <strong>Coupon Code Tracking:</strong> FirstPromoter supports promotion code tracking. RefearnApp includes coupon code tracking out of the box — see our guide on <a href="/blog/stripe-coupon-affiliate-tracking" class="text-indigo-600 hover:text-indigo-800 underline font-medium">tracking Stripe coupons for affiliates</a> for the full implementation.
+    </li>
+    <li>
+      <strong>Affiliate Portal:</strong> FirstPromoter's portal is hosted and branded by them. RefearnApp's portal is self-hosted and fully customizable.
+    </li>
+    <li>
+      <strong>Payout Management:</strong> FirstPromoter manages payouts through their platform. RefearnApp gives you affiliate-level approve/decline control — you decide what gets paid, when.
+    </li>
+    <li>
+      <strong>Vendor Lock-in:</strong> FirstPromoter is high lock-in — cancel and your referral links break, your data is a CSV, and you rebuild from scratch. RefearnApp is zero lock-in — your data is in your database, your links are on your domain.
+    </li>
+    <li>
+      <strong>Cost:</strong> FirstPromoter runs $89–$129+/month. RefearnApp is free to self-host — pay only for the infrastructure you're already running.
+    </li>
+  </ul>
+
+</section>
+
+<hr class="border-slate-200" />
+
+<section id="migration-problem" class="scroll-mt-28 space-y-4">
+
+  <h2 class="text-3xl font-black tracking-tight text-slate-900 mt-12 mb-6">The Migration Problem Nobody Talks About</h2>
+
+  <p>
+    The real cost of FirstPromoter isn't the monthly fee. It's what happens when you try to leave.
+  </p>
+
+  <p>When you cancel FirstPromoter, here's what actually breaks:</p>
+
+  <h3 class="text-2xl font-bold tracking-tight text-slate-900 mt-8 mb-4">Your referral links die immediately</h3>
+  <p>
+    Every affiliate has been sharing links that route through FirstPromoter's redirect infrastructure. The moment you cancel, those links return 404s. Every blog post, YouTube description, newsletter, and social profile your affiliates have ever published now sends traffic to a dead URL.
+  </p>
+
+  <h3 class="text-2xl font-bold tracking-tight text-slate-900 mt-8 mb-4">Your attribution history is a flat export</h3>
+  <p>
+    FirstPromoter can give you a CSV of commission history. What it can't give you is the relational structure — which click events mapped to which conversions, which campaign drove which affiliate's traffic, the raw event log that lets you audit attribution decisions. You get a ledger, not a database.
+  </p>
+
+  <h3 class="text-2xl font-bold tracking-tight text-slate-900 mt-8 mb-4">Your affiliates need new links</h3>
+  <p>
+    You have to contact every active affiliate, explain the migration, issue new tracking links, and ask them to update everything they've published. Some won't bother. Those referral relationships — and the traffic they were generating — are permanently lost.
+  </p>
+
+  <h3 class="text-2xl font-bold tracking-tight text-slate-900 mt-8 mb-4">You rebuild the integration anyway</h3>
+  <p>
+    The Stripe webhook handler, the checkout metadata logic, the cookie capture — you write all of this fresh regardless of which platform you move to. The only question is whether you're writing it to feed another third-party system or your own.
+  </p>
+
+  <El as="alert" type="warning">
+    This is the same pattern we detailed in our post on <a href="/blog/self-hosted-affiliate-tracking-software" class="text-indigo-600 hover:text-indigo-800 underline font-medium">self-hosted affiliate tracking software for SaaS</a> — the lock-in is structural, not accidental. It's how these platforms retain customers at renewal time.
+  </El>
+
+  <BlogImg
+    post="open-source-alternative-to-firstpromoter"
+    num="1"
+    alt="A two-path diagram. Left path labeled 'FirstPromoter Migration': Cancel subscription → referral links break → CSV export only → affiliates need new links → rebuild tracking from scratch → start over. Right path labeled 'RefearnApp Self-Hosted': Need to change something → update your own code → redeploy → done. Dark slate background, red warning icons on the left path, green checkmarks on the right path, indigo dividing line."
+  />
+
+</section>
+
+<hr class="border-slate-200" />
+
+<section id="how-it-works" class="scroll-mt-28 space-y-4">
+
+  <h2 class="text-3xl font-black tracking-tight text-slate-900 mt-12 mb-6">How Self-Hosted Affiliate Tracking Works</h2>
+
+  <p>
+    If you're evaluating FirstPromoter alternatives, you need a clear mental model of what "affiliate tracking" actually consists of technically — because the gap between "tracking the referral" and "running a complete affiliate program" is where most self-build attempts stall.
+  </p>
+
+  <p>Affiliate tracking has three core components:</p>
+
+  <h3 class="text-2xl font-bold tracking-tight text-slate-900 mt-8 mb-4">1. Attribution</h3>
+  <p>
+    Capturing the <code>?ref=</code> parameter when a visitor arrives via a referral link and persisting it until checkout. This is a cookie set on your domain. It's 20 lines of code. We cover the full implementation in our guide on <a href="/blog/affiliate-program-nextjs" class="text-indigo-600 hover:text-indigo-800 underline font-medium">building an affiliate program in Next.js</a>.
+  </p>
+
+  <h3 class="text-2xl font-bold tracking-tight text-slate-900 mt-8 mb-4">2. Conversion</h3>
+  <p>
+    Reading the referral cookie at checkout, attaching it to the Stripe session as metadata, and confirming the conversion via webhook. Another 50 lines of code. The webhook handler is the authoritative signal — never the client-side success page.
+  </p>
+
+  <h3 class="text-2xl font-bold tracking-tight text-slate-900 mt-8 mb-4">3. Reporting</h3>
+  <p>
+    Aggregating attribution and conversion data into meaningful metrics for you and your affiliates: clicks, conversions, commission earned, payout status. This is where the hours go. The dashboard, the affiliate portal, the admin payout UI — this is the part that takes weeks to build properly.
+  </p>
+
+  <El as="alert" type="info">
+    The tracking code is a weekend of work. The surrounding infrastructure is what FirstPromoter is actually charging you for. For a complete technical breakdown of the referral system architecture in React, see our guide on <a href="/blog/how-to-build-a-referral-system-in-react" class="text-indigo-600 hover:text-indigo-800 underline font-medium">how to build a referral system in React</a>.
+  </El>
+
+</section>
+
+<hr class="border-slate-200" />
+
+<section id="build-vs-deploy" class="scroll-mt-28 space-y-4">
+
+  <h2 class="text-3xl font-black tracking-tight text-slate-900 mt-12 mb-6">The Infrastructure That Takes Weeks to Build</h2>
+
+  <p>Here's the honest build-vs-deploy calculation for a complete affiliate program:</p>
+
+  <div class="w-full overflow-x-auto rounded-2xl border border-slate-200 shadow-sm mb-8">
+    <table class="min-w-[600px] w-full divide-y divide-slate-200 m-0 text-left">
+      <thead class="bg-slate-50">
+      <tr>
+        <th class="px-6 py-4 text-xs font-bold uppercase text-slate-500">Component</th>
+        <th class="px-6 py-4 text-xs font-bold uppercase text-slate-500">DIY Effort</th>
+      </tr>
+      </thead>
+      <tbody class="divide-y divide-slate-100 bg-white text-sm text-slate-600">
+      <tr>
+        <td class="px-6 py-4 font-bold text-slate-900">Cookie capture + attribution logic</td>
+        <td class="px-6 py-4">~2 hours</td>
+      </tr>
+      <tr>
+        <td class="px-6 py-4 font-bold text-slate-900">Stripe checkout integration</td>
+        <td class="px-6 py-4">~2 hours</td>
+      </tr>
+      <tr>
+        <td class="px-6 py-4 font-bold text-slate-900">Stripe webhook handler</td>
+        <td class="px-6 py-4">~3 hours</td>
+      </tr>
+      <tr>
+        <td class="px-6 py-4 font-bold text-slate-900">Database schema + migrations</td>
+        <td class="px-6 py-4">~1 hour</td>
+      </tr>
+      <tr>
+        <td class="px-6 py-4 font-bold text-slate-900">Affiliate-facing portal</td>
+        <td class="px-6 py-4 text-red-600 font-semibold">80–150 hours</td>
+      </tr>
+      <tr>
+        <td class="px-6 py-4 font-bold text-slate-900">Admin payout management UI</td>
+        <td class="px-6 py-4 text-red-600 font-semibold">40–80 hours</td>
+      </tr>
+      <tr>
+        <td class="px-6 py-4 font-bold text-slate-900">Email notifications</td>
+        <td class="px-6 py-4 text-red-600 font-semibold">20–40 hours</td>
+      </tr>
+      <tr>
+        <td class="px-6 py-4 font-bold text-slate-900">Coupon code tracking</td>
+        <td class="px-6 py-4 text-red-600 font-semibold">20–40 hours</td>
+      </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p>
+    The tracking code is 8 hours. The surrounding product is 3–4 months. That's what FirstPromoter is charging you $89/month to avoid building.
+  </p>
+
+</section>
+
+<hr class="border-slate-200" />
+
+<section id="strategy-layer" class="scroll-mt-28 space-y-4">
+
+  <h2 class="text-3xl font-black tracking-tight text-slate-900 mt-12 mb-6">Launching Your Referral Program: The Strategy Layer</h2>
+
+  <p>
+    A self-hosted affiliate infrastructure is only as valuable as the referral program running on top of it. The technical setup is the easy part — the business decisions determine whether the program actually drives growth.
+  </p>
+
+  <p>The questions you need to answer before launch:</p>
+
+  <h3 class="text-2xl font-bold tracking-tight text-slate-900 mt-8 mb-4">What's the incentive structure?</h3>
+  <p>
+    Double-sided programs — where both the referrer and the new customer get rewarded — consistently outperform one-sided programs for self-serve SaaS. The new customer has a concrete reason to act on the recommendation rather than file it away as "something to look at later."
+  </p>
+
+  <h3 class="text-2xl font-bold tracking-tight text-slate-900 mt-8 mb-4">What's the commission rate?</h3>
+  <p>
+    20–30% recurring commission is the standard for SaaS affiliate programs. Too low and affiliates don't bother. Too high and you're eroding margin on customers who would have converted anyway.
+  </p>
+
+  <h3 class="text-2xl font-bold tracking-tight text-slate-900 mt-8 mb-4">What's the attribution window?</h3>
+  <p>
+    30 days is the standard. SaaS purchase decisions take time — a 7-day window misses a significant portion of legitimate conversions. For high-ACV products, consider 60–90 days.
+  </p>
+
+  <h3 class="text-2xl font-bold tracking-tight text-slate-900 mt-8 mb-4">Who can refer?</h3>
+  <p>
+    For early-stage SaaS, open it to all users by default. You're maximizing reach, not curating quality. Curation is a problem you solve at 100+ active affiliates.
+  </p>
+
+  <El as="alert" type="info">
+    We cover the full launch sequence — week by week — in our guide on <a href="/blog/how-to-launch-a-referral-loop-for-saas" class="text-indigo-600 hover:text-indigo-800 underline font-medium">how to launch a referral loop for SaaS</a>.
+  </El>
+
+</section>
+
+<hr class="border-slate-200" />
+
+<section id="refearnapp" class="scroll-mt-28 space-y-4">
+
+  <h2 class="text-3xl font-black tracking-tight text-slate-900 mt-12 mb-6">Where RefearnApp Fits</h2>
+
+  <p>
+    <a href="https://github.com/ZAK123DSFDF/refearnapp" class="text-indigo-600 hover:text-indigo-800 underline font-medium">RefearnApp</a> is a free, open-source, self-hostable affiliate management platform that ships the infrastructure layer — the portal, the commission engine, the payout management, the Stripe webhook handling — so you don't spend 3 months building it before your affiliate program can launch.
+  </p>
+
+  <p>What it includes out of the box:</p>
+
+  <ul class="list-disc pl-6 space-y-2">
+    <li><strong>Affiliate portal</strong> — your affiliates log in, see their clicks, conversions, and commission history. You don't build this.</li>
+    <li><strong>Link-based referral tracking</strong> — <code>?ref=</code> parameter capture, first-click attribution, 30-day cookie persistence.</li>
+    <li><strong>Coupon code tracking</strong> — Stripe promotion code attribution via webhook, mapped to affiliate IDs in your database.</li>
+    <li><strong>Commission engine</strong> — configurable percentage commissions, recurring attribution on subscription renewals.</li>
+    <li><strong>Payout management</strong> — approve or decline commissions at the affiliate level. Mark payouts as paid. Full history per affiliate.</li>
+    <li><strong>Your database, your schema</strong> — data lives in your own Postgres instance. Direct SQL access. No CSV exports, no vendor lock-in.</li>
+    <li><strong>Zero revenue cut</strong> — every dollar of commission goes to your affiliates. RefearnApp takes nothing.</li>
+    <li><strong>AGPL-3.0 licensed</strong> — read the source, fork it, extend it however your program needs.</li>
+  </ul>
+
+  <h3 class="text-2xl font-bold tracking-tight text-slate-900 mt-8 mb-4">Built on the stack you're already running</h3>
+
+  <p>
+    Next.js (App Router), TypeScript, Drizzle ORM, PostgreSQL, Cloudflare Workers, Upstash Redis, Docker. No context switching, no foreign framework to learn, no ORM you've never used.
+  </p>
+
+  <BlogImg
+    post="open-source-alternative-to-firstpromoter"
+    num="2"
+    alt="Side-by-side comparison. Left column 'FirstPromoter': $89/month base fee → data in their DB → referral links on their domain → CSV export only → breaks on cancellation. Right column 'RefearnApp': $0 self-hosted → data in your Postgres → referral links on your domain → direct SQL access → update your own code when needed. Dark slate background, red X markers on left, green checkmarks on right, indigo header accents."
+  />
+
+</section>
+
+<hr class="border-slate-200" />
+
+<section id="deployment" class="scroll-mt-28 space-y-4">
+
+  <h2 class="text-3xl font-black tracking-tight text-slate-900 mt-12 mb-6">Deployment</h2>
+
+  <p>
+    Getting RefearnApp live is under 30 minutes on any VPS with Docker installed. The full deployment guide — environment variables, Stripe webhook configuration, Cloudflare Worker setup — is in the docs:
+  </p>
+
+  <p>
+    → <a href="https://refearnapp.com/docs" class="text-indigo-600 hover:text-indigo-800 underline font-medium">RefearnApp Deployment Docs</a>
+  </p>
+
+</section>
+
+<hr class="border-slate-200" />
+
+<section id="conclusion" class="scroll-mt-28 space-y-4">
+
+  <h2 class="text-3xl font-black tracking-tight text-slate-900 mt-12 mb-6">Conclusion & Next Steps</h2>
+
+  <p>
+    FirstPromoter solves a real problem — you need affiliate tracking infrastructure. But it solves it by owning your data, your links, and your attribution logic in exchange for a monthly fee that compounds as you grow.
+  </p>
+
+  <p>Self-hosting with RefearnApp means:</p>
+
+  <ul class="list-disc pl-6 space-y-2">
+    <li>Your referral links are on your domain — they don't break when you change tools</li>
+    <li>Your conversion data is in your database — query it directly, no export needed</li>
+    <li>Your tracking logic is in your codebase — read it, modify it, extend it</li>
+    <li>Your monthly cost is $0 — pay only for the infrastructure you're already running</li>
+  </ul>
+
+  <GithubCta title="Take Control of Your Affiliate Data" />
+
+</section>
