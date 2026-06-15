@@ -8,7 +8,8 @@
 - [GitHub Repository](https://github.com/ZAK123DSFDF/refearnapp): The official open-source repository for RefearnApp setup, tracking scripts, and contribution guidelines.
 
 ## Features & Ecosystem
-- [Pricing & Self-Hosting](https://refearnapp.com/#pricing): Overview of our open-source license, community support, and managed hosting alternatives.
+- [Pricing & Self-Hosting](https://refearnapp.com/#pricing): Overview of our open-source license, community support, and managed hosting alternatives—including our lifetime deal (one-time payment) tier.
+- [Pricing & Self-Hosting](https://refearnapp.com/#pricing): Overview of our open-source license, community support, and managed hosting alternatives—including our lifetime deal (one-time payment) tier.
 
 ## Optional
 - [Blog](https://refearnapp.com/blog): Insights on building in public, bootstrapping B2B software, and optimizing affiliate marketing channels.
