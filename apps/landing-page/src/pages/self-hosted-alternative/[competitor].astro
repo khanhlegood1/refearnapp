@@ -1,0 +1,498 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import Header from '../../components/Header.astro';
+import Footer from '../../components/Footer.astro';
+import { competitors } from '../../data/competitors';
+
+export async function getStaticPaths() {
+  return competitors.map((c) => ({
+    params: { competitor: c.slug },
+    props: { info: c },
+  }));
+}
+
+const { info } = Astro.props;
+
+const otherCompetitors = competitors
+  .filter((c) => c.slug !== info.slug)
+  .slice(0, 8);
+
+const checkIcon = `<svg class="w-5 h-5 text-purple-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>`;
+const crossIcon = `<svg class="w-5 h-5 text-red-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M6 18L18 6M6 6l12 12"></path></svg>`;
+
+// Average VPS hosting cost estimate for self-hosting RefearnApp
+const MONTHLY_HOSTING_ESTIMATE = 10; // $10/mo average VPS
+const annualHostingCost = MONTHLY_HOSTING_ESTIMATE * 12;
+
+const year1Save = info.annualPrice - annualHostingCost;
+const year2Save = (info.annualPrice * 2) - (annualHostingCost * 2);
+const year3Save = (info.annualPrice * 3) - (annualHostingCost * 3);
+
+const readinessItems = [
+  { id: 'control', label: 'I want my affiliate data on my own server, not a third party\u2019s cloud' },
+  { id: 'cost', label: 'I want to pay a few dollars in hosting instead of a recurring subscription' },
+  { id: 'uptime', label: 'I want to control my own backups, uptime and infrastructure' },
+  { id: 'privacy', label: 'I don\u2019t want any third party able to access or process my customer data' },
+  { id: 'longterm', label: 'I\u2019m planning to run this for years and want the lowest long-term cost' },
+];
+---
+
+<Layout
+  title={`Self-Hosted ${info.name} Alternative — RefearnApp (Run On Your Own Server)`}
+  description={`Looking for a self-hosted alternative to ${info.name}? RefearnApp runs on your own infrastructure. No third-party servers, no recurring subscription \u2014 just hosting cost.`}
+>
+  <Header />
+
+  <main class="mx-auto max-w-5xl px-4 py-12 md:px-6 md:py-24">
+
+    <div class="mt-8 mb-16 text-center">
+      <nav class="mb-4 text-sm text-slate-400">
+        <a href="/" class="hover:text-primary">Home</a> /
+        <a href="/self-hosted-alternative" class="hover:text-primary">Self-Hosted Alternatives</a> /
+        <span class="font-medium text-slate-600">{info.name}</span>
+      </nav>
+
+      <div class="mb-4 inline-flex items-center gap-2 rounded-full bg-purple-50 border border-purple-200 px-4 py-1.5 text-sm font-semibold text-purple-700">
+        🖥️ Self-Hosted · Your Servers · Your Data · Your Rules
+      </div>
+
+      <h1 class="mt-4 mb-6 text-4xl font-extrabold tracking-tight text-slate-900 md:text-6xl">
+        The Self-Hosted<br />
+        <span class="text-primary">{info.name} Alternative</span>
+      </h1>
+      <p class="mx-auto max-w-2xl text-xl leading-relaxed text-slate-600">
+        {info.name} runs entirely on their servers — you pay {info.price} forever and never control the infrastructure.
+        RefearnApp runs on <strong>your own server</strong>. Deploy it once, pay only hosting costs.
+      </p>
+
+      <div class="mt-8 flex flex-col sm:flex-row items-center justify-center gap-4">
+        <a href="https://refearnapp.com/docs" class="rounded-xl bg-slate-900 px-8 py-4 text-lg font-bold text-white hover:bg-slate-800 transition-colors shadow-lg">
+          📘 Read Self-Host Docs
+        </a>
+        <a href="/#pricing" class="rounded-xl bg-purple-600 px-8 py-4 text-lg font-bold text-white hover:bg-purple-700 transition-colors shadow-lg">
+          Get Lifetime Deal — $199
+        </a>
+      </div>
+    </div>
+
+    <!-- Cross-links to other angle pages -->
+    <div class="mb-10 flex flex-col sm:flex-row items-center justify-center gap-3">
+      <a href={`/one-time-alternative/${info.slug}`} class="inline-flex items-center gap-2 rounded-full border border-green-200 bg-green-50 px-5 py-2 text-sm font-semibold text-green-700 hover:bg-green-100 transition-colors">
+        💰 One-time payment alternative to {info.name} →
+      </a>
+      <a href={`/open-source-alternative/${info.slug}`} class="inline-flex items-center gap-2 rounded-full border border-indigo-200 bg-indigo-50 px-5 py-2 text-sm font-semibold text-indigo-700 hover:bg-indigo-100 transition-colors">
+        🔓 Open source alternative to {info.name} →
+      </a>
+    </div>
+
+    <!-- TCO Calculator + Readiness Checklist Combined -->
+    <div class="mb-20 rounded-3xl border border-purple-100 bg-gradient-to-br from-purple-50 to-slate-50 p-8 md:p-12 shadow-xl">
+      <div class="mb-8 text-center">
+        <h2 class="text-3xl font-extrabold text-slate-900">
+          🖥️ Should You Self-Host?
+        </h2>
+        <p class="mt-2 text-slate-500">
+          Check what matters to you, then see your real cost savings vs {info.name}.
+        </p>
+      </div>
+
+      <!-- Readiness checklist -->
+      <div class="space-y-3 mb-10" id="readiness-checklist">
+        {readinessItems.map((item) => (
+          <label
+            class="readiness-item flex cursor-pointer items-start gap-4 rounded-xl border border-slate-200 bg-white p-4 shadow-sm transition-all hover:border-purple-300"
+            data-id={item.id}
+          >
+            <div class="relative mt-0.5 flex-shrink-0">
+              <input
+                type="checkbox"
+                class="readiness-checkbox peer h-5 w-5 cursor-pointer appearance-none rounded border-2 border-slate-300 checked:border-purple-600 checked:bg-purple-600 transition-colors"
+                data-id={item.id}
+              />
+              <svg class="pointer-events-none absolute inset-0 hidden h-5 w-5 text-white peer-checked:block" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" />
+              </svg>
+            </div>
+            <span class="text-sm font-medium text-slate-700 leading-relaxed">{item.label}</span>
+          </label>
+        ))}
+      </div>
+
+      <!-- Readiness score -->
+      <div class="mb-10 rounded-2xl border border-purple-200 bg-white p-6 text-center shadow-sm">
+        <p class="text-sm text-slate-500 mb-2">Your self-hosting readiness</p>
+        <div class="flex items-center justify-center gap-4 mb-4">
+          <div class="text-5xl font-extrabold text-purple-600" id="readiness-score">0</div>
+          <div class="text-2xl text-slate-400 font-bold">/ 5</div>
+        </div>
+        <div class="mb-4 h-3 rounded-full bg-slate-100 overflow-hidden">
+          <div class="h-3 rounded-full bg-purple-600 transition-all duration-500" id="readiness-bar" style="width: 0%"></div>
+        </div>
+        <p class="text-lg font-bold text-slate-900" id="readiness-message">
+          Check what matters to you above
+        </p>
+        <p class="mt-1 text-sm text-slate-500" id="readiness-sub">
+          RefearnApp is fully self-hostable with step-by-step docs
+        </p>
+      </div>
+
+      <!-- TCO Calculator -->
+      <div class="mb-6 text-center">
+        <h3 class="text-xl font-bold text-slate-900">💰 Hosting Cost vs {info.name} Subscription</h3>
+        <p class="mt-1 text-sm text-slate-500">Self-hosting RefearnApp costs roughly ${MONTHLY_HOSTING_ESTIMATE}/mo in VPS hosting — here's what that means over time.</p>
+      </div>
+
+      <div class="mb-6 flex justify-center">
+        <div class="inline-flex rounded-xl border border-slate-200 bg-white p-1 shadow-sm" id="year-tabs">
+          <button data-year="1" class="year-tab rounded-lg px-5 py-2 text-sm font-semibold transition-all">Year 1</button>
+          <button data-year="2" class="year-tab rounded-lg px-5 py-2 text-sm font-semibold transition-all text-slate-500 hover:text-slate-700">Year 2</button>
+          <button data-year="3" class="year-tab rounded-lg px-5 py-2 text-sm font-semibold transition-all text-slate-500 hover:text-slate-700">Year 3</button>
+        </div>
+      </div>
+
+      <div class="rounded-2xl bg-white border border-slate-200 p-6">
+        <div class="grid sm:grid-cols-2 gap-6 mb-6">
+          <div class="rounded-xl bg-red-50 border border-red-100 p-5 text-center">
+            <p class="text-sm text-slate-500 mb-1">{info.name} (subscription)</p>
+            <p class="text-3xl font-extrabold text-red-500" id="competitor-total">${info.annualPrice.toLocaleString()}</p>
+            <p class="text-xs text-slate-400 mt-1">year 1 total</p>
+          </div>
+          <div class="rounded-xl bg-green-50 border border-green-100 p-5 text-center">
+            <p class="text-sm text-slate-500 mb-1">RefearnApp self-hosted (hosting only)</p>
+            <p class="text-3xl font-extrabold text-green-600" id="selfhost-total">${annualHostingCost.toLocaleString()}</p>
+            <p class="text-xs text-slate-400 mt-1">year 1 total</p>
+          </div>
+        </div>
+
+        <div class="rounded-xl bg-purple-50 border border-purple-200 p-5 text-center">
+          <p class="text-sm text-slate-500">You save</p>
+          <p class="text-4xl font-extrabold text-purple-600" id="total-savings">
+            {year1Save > 0 ? `$${year1Save.toLocaleString()}` : 'Pays off instantly'}
+          </p>
+          <p class="text-xs text-slate-400 mt-1" id="savings-label">in year 1 by self-hosting</p>
+        </div>
+
+        <div class="mt-6 space-y-3">
+          <div>
+            <div class="mb-1 flex justify-between text-sm">
+              <span class="font-semibold text-slate-600">{info.name}</span>
+              <span class="font-bold text-red-500" id="competitor-bar-label">${info.annualPrice.toLocaleString()}</span>
+            </div>
+            <div class="h-4 rounded-full bg-red-100 overflow-hidden">
+              <div class="h-4 rounded-full bg-red-400" style="width: 100%"></div>
+            </div>
+          </div>
+          <div>
+            <div class="mb-1 flex justify-between text-sm">
+              <span class="font-semibold text-slate-600">RefearnApp self-hosted</span>
+              <span class="font-bold text-green-600" id="selfhost-bar-label">${annualHostingCost.toLocaleString()}</span>
+            </div>
+            <div class="h-4 rounded-full bg-green-100 overflow-hidden">
+              <div class="h-4 rounded-full bg-green-500 transition-all duration-500" id="selfhost-bar" style={`width: ${Math.min(100, (annualHostingCost / info.annualPrice) * 100)}%`}></div>
+            </div>
+          </div>
+        </div>
+        <p class="mt-4 text-center text-xs text-slate-400">Estimate based on ~${MONTHLY_HOSTING_ESTIMATE}/mo average VPS cost. Actual hosting cost depends on your provider and traffic.</p>
+      </div>
+    </div>
+
+    <!-- Problem vs Solution -->
+    <div class="mb-20 grid gap-6 md:grid-cols-2 md:gap-8">
+      <div class="rounded-2xl border border-red-100 bg-red-50 p-6 shadow-sm md:p-8">
+        <h3 class="mb-4 text-xl font-bold text-red-700">
+          {info.name} — Cloud-Only Problems
+        </h3>
+        <ul class="space-y-4 text-red-900/80">
+          <li class="flex items-start gap-3">
+            <span class="font-bold mt-0.5">✕</span>
+            {info.weakness}
+          </li>
+          <li class="flex items-start gap-3">
+            <span class="font-bold mt-0.5">✕</span>
+            Your affiliate and customer data lives entirely on their infrastructure.
+          </li>
+          <li class="flex items-start gap-3">
+            <span class="font-bold mt-0.5">✕</span>
+            You pay {info.price} every month regardless of your actual usage.
+          </li>
+          <li class="flex items-start gap-3">
+            <span class="font-bold mt-0.5">✕</span>
+            No option to run it on your own infrastructure — ever.
+          </li>
+        </ul>
+      </div>
+
+      <div class="rounded-2xl border border-purple-100 bg-purple-50 p-6 shadow-sm md:p-8">
+        <h3 class="mb-4 text-xl font-bold text-purple-700">
+          RefearnApp — Runs On Your Server
+        </h3>
+        <ul class="space-y-4 text-purple-900/80">
+          <li class="flex items-start gap-3">
+            <span class="font-bold text-purple-600 mt-0.5">✓</span>
+            Deploy on any VPS or cloud provider you already trust.
+          </li>
+          <li class="flex items-start gap-3">
+            <span class="font-bold text-purple-600 mt-0.5">✓</span>
+            Pay only hosting costs — typically $5-20/mo instead of a subscription.
+          </li>
+          <li class="flex items-start gap-3">
+            <span class="font-bold text-purple-600 mt-0.5">✓</span>
+            Full control over backups, uptime and access.
+          </li>
+          <li class="flex items-start gap-3">
+            <span class="font-bold text-purple-600 mt-0.5">✓</span>
+            Step-by-step docs — no dev work, just run the setup scripts.
+          </li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Docs callout -->
+    <div class="mb-16 rounded-2xl border border-purple-100 bg-purple-50 p-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+      <div>
+        <h3 class="font-bold text-slate-900 mb-1">Ready to self-host RefearnApp?</h3>
+        <p class="text-sm text-slate-500">
+          Our documentation walks you through the full setup. No dev work required —
+          just follow the steps, run the setup scripts, and you're live on your own server.
+        </p>
+      </div>
+      <a href="https://refearnapp.com/docs" class="flex-shrink-0 rounded-xl border border-purple-300 bg-white px-5 py-2.5 text-sm font-bold text-purple-700 hover:bg-purple-100 transition-colors whitespace-nowrap">
+        Read the Docs →
+      </a>
+    </div>
+
+    <!-- Feature Comparison Table -->
+    <div class="mb-20">
+      <h2 class="mb-8 text-center text-3xl font-extrabold text-slate-900">
+        {info.name} vs RefearnApp — Self-Hosting Comparison
+      </h2>
+      <div class="overflow-x-auto rounded-3xl border border-slate-200 bg-white shadow-xl">
+        <table class="w-full min-w-[700px] border-collapse text-left text-sm md:text-base">
+          <thead>
+          <tr class="border-b border-slate-200 bg-slate-50/50">
+            <th class="p-6 font-bold tracking-wider text-slate-500 uppercase">Feature</th>
+            <th class="p-6 font-bold tracking-wider text-slate-400 uppercase">{info.name}</th>
+            <th class="bg-purple-50/50 p-6 font-bold tracking-wider text-purple-600 uppercase">RefearnApp</th>
+          </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-100">
+          <tr>
+            <td class="p-6 font-semibold text-slate-900">Hosting Location</td>
+            <td class="p-6 text-red-500 font-semibold">Their cloud only</td>
+            <td class="bg-purple-50/30 p-6 font-bold text-purple-700">Your own server</td>
+          </tr>
+          <tr>
+            <td class="p-6 font-semibold text-slate-900">Self-Host Documentation</td>
+            <td class="p-6 text-slate-400" set:html={crossIcon} />
+            <td class="bg-purple-50/30 p-6 font-bold text-purple-700">
+              <a href="https://refearnapp.com/docs" class="underline hover:text-purple-900">refearnapp.com/docs</a>
+            </td>
+          </tr>
+          <tr>
+            <td class="p-6 font-semibold text-slate-900">Annual Cost</td>
+            <td class="p-6 text-red-500 font-bold">${info.annualPrice.toLocaleString()}/yr</td>
+            <td class="bg-purple-50/30 p-6 font-bold text-green-700">~${annualHostingCost.toLocaleString()}/yr hosting only</td>
+          </tr>
+          <tr>
+            <td class="p-6 font-semibold text-slate-900">Data Location</td>
+            <td class="p-6 text-slate-500">Third-party servers</td>
+            <td class="bg-purple-50/30 p-6 text-purple-600" set:html={checkIcon} />
+          </tr>
+          <tr>
+            <td class="p-6 font-semibold text-slate-900">Backup Control</td>
+            <td class="p-6 text-slate-400" set:html={crossIcon} />
+            <td class="bg-purple-50/30 p-6 text-purple-600" set:html={checkIcon} />
+          </tr>
+          <tr>
+            <td class="p-6 font-semibold text-slate-900">Unlimited Affiliates</td>
+            <td class="p-6 text-slate-500">Limited on lower tiers</td>
+            <td class="bg-purple-50/30 p-6 text-purple-600" set:html={checkIcon} />
+          </tr>
+          <tr>
+            <td class="p-6 font-semibold text-slate-900">Stripe & Paddle Support</td>
+            <td class="p-6 text-slate-500">Stripe only or expensive add-on</td>
+            <td class="bg-purple-50/30 p-6 text-purple-600" set:html={checkIcon} />
+          </tr>
+          <tr>
+            <td class="p-6 font-semibold text-slate-900">Coupon Code Tracking</td>
+            <td class="p-6 text-slate-400" set:html={crossIcon} />
+            <td class="bg-purple-50/30 p-6 text-purple-600" set:html={checkIcon} />
+          </tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="mt-4 text-center text-xs text-slate-400 italic md:hidden">← Swipe to compare →</p>
+    </div>
+
+    <!-- FAQ -->
+    <div class="mb-20">
+      <h2 class="mb-8 text-center text-3xl font-extrabold text-slate-900">Frequently Asked Questions</h2>
+      <div class="space-y-4">
+        {[
+          {
+            q: `Can I really self-host RefearnApp instead of using ${info.name}?`,
+            a: `Yes. RefearnApp is fully self-hostable. Follow the guide at refearnapp.com/docs, run the setup scripts, and deploy it on your own VPS. ${info.name} only offers a cloud-hosted version with no self-hosting option.`
+          },
+          {
+            q: `How much does it cost to self-host RefearnApp vs ${info.name}?`,
+            a: `${info.name} costs $${info.annualPrice} per year as a subscription. Self-hosting RefearnApp typically costs around $${annualHostingCost} per year in VPS hosting, since there's no subscription fee — you only pay for your server.`
+          },
+          {
+            q: `Do I need to be a developer to self-host RefearnApp?`,
+            a: `No. The documentation at refearnapp.com/docs walks you through every step. You just follow the guide and run the provided setup scripts. We handle all updates and improvements.`
+          },
+          {
+            q: `Who controls my data if I self-host?`,
+            a: `You do, completely. Self-hosting means your affiliate and customer data lives entirely on your own server. No third party, including us, has access to it.`
+          },
+          {
+            q: `Can I switch from RefearnApp's managed cloud to self-hosting later?`,
+            a: `Yes. You can start on our managed cloud for instant setup and migrate to your own server whenever you're ready, using the migration guide in our docs.`
+          },
+        ].map((faq) => (
+          <details class="group rounded-2xl border border-slate-200 bg-white p-6 shadow-sm cursor-pointer">
+            <summary class="flex items-center justify-between font-semibold text-slate-900 list-none">
+              {faq.q}
+              <svg class="w-5 h-5 text-slate-400 group-open:rotate-180 transition-transform flex-shrink-0 ml-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+              </svg>
+            </summary>
+            <p class="mt-4 text-slate-600 leading-relaxed">{faq.a}</p>
+          </details>
+        ))}
+      </div>
+    </div>
+
+    <!-- Interlinked self-hosted pages -->
+    <div class="mb-16">
+      <h3 class="mb-4 text-center text-xl font-bold text-slate-900">
+        More Self-Hosted Alternatives
+      </h3>
+      <p class="mb-8 text-center text-slate-500 text-sm">
+        RefearnApp replaces every cloud-only affiliate tool
+      </p>
+      <div class="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4">
+        {otherCompetitors.map((c) => (
+          <a
+            href={`/self-hosted-alternative/${c.slug}`}
+            class="flex flex-col items-center justify-center rounded-xl border border-slate-200 bg-white p-4 text-center text-sm font-semibold text-slate-600 transition-all hover:border-purple-600 hover:text-purple-600 hover:shadow-sm"
+          >
+            <span>{c.name}</span>
+            <span class="mt-1 text-xs font-normal text-red-400">Cloud Only</span>
+          </a>
+        ))}
+      </div>
+    </div>
+
+    <!-- CTA -->
+    <div class="mb-24 rounded-3xl bg-gradient-to-br from-purple-600 to-indigo-800 p-10 text-center shadow-2xl">
+      <h2 class="mb-4 text-3xl font-extrabold text-white md:text-4xl">
+        Stop Renting. Start Owning Your Infrastructure.
+      </h2>
+      <p class="mb-8 text-purple-200 text-lg">
+        RefearnApp runs on your server, your rules, your control.
+      </p>
+      <div class="flex flex-col sm:flex-row items-center justify-center gap-4">
+        <a href="https://refearnapp.com/docs" class="rounded-xl bg-white px-8 py-4 text-lg font-bold text-purple-700 hover:bg-purple-50 transition-colors shadow-lg">
+          📘 Read Self-Host Docs
+        </a>
+        <a href="/#pricing" class="rounded-xl border border-purple-300 px-8 py-4 text-lg font-semibold text-white hover:bg-purple-700 transition-colors">
+          Get Managed Cloud — $199 Lifetime
+        </a>
+      </div>
+      <p class="mt-6 text-purple-300 text-sm">Self-hostable · Open source · One-time payment · No lock-in</p>
+    </div>
+
+  </main>
+  <Footer />
+</Layout>
+
+<script define:vars={{ totalItems: readinessItems.length, annualPrice: info.annualPrice, annualHostingCost, MONTHLY_HOSTING_ESTIMATE }}>
+  // Readiness checklist scoring
+  const checkboxes = document.querySelectorAll('.readiness-checkbox');
+  const scoreNumber = document.getElementById('readiness-score');
+  const scoreBar = document.getElementById('readiness-bar');
+  const scoreMessage = document.getElementById('readiness-message');
+  const scoreSub = document.getElementById('readiness-sub');
+  const items = document.querySelectorAll('.readiness-item');
+
+  const messages = {
+    0: { msg: 'Check what matters to you above', sub: 'RefearnApp is fully self-hostable with step-by-step docs' },
+    1: { msg: 'You have self-hosting needs — RefearnApp can help', sub: 'Keep checking to see your full readiness' },
+    2: { msg: 'Self-hosting fits your needs ✓', sub: 'You value control over infrastructure' },
+    3: { msg: 'Strong fit for self-hosting ✓', sub: 'Cost and control both matter to you' },
+    4: { msg: 'Excellent fit — you should self-host ✓', sub: 'RefearnApp is built for exactly this use case' },
+    5: { msg: 'Perfect fit — self-hosting is clearly for you 🎯', sub: 'You need full control and the lowest long-term cost' },
+  };
+
+  function updateReadiness() {
+    const checked = document.querySelectorAll('.readiness-checkbox:checked').length;
+    const pct = (checked / totalItems) * 100;
+    scoreNumber.textContent = checked;
+    scoreBar.style.width = `${pct}%`;
+    const state = messages[checked];
+    scoreMessage.textContent = state.msg;
+    scoreSub.textContent = state.sub;
+
+    items.forEach((item) => {
+      const cb = item.querySelector('input[type="checkbox"]');
+      if (cb && cb.checked) {
+        item.classList.add('border-purple-400', 'bg-purple-50/50');
+        item.classList.remove('border-slate-200', 'bg-white');
+      } else {
+        item.classList.remove('border-purple-400', 'bg-purple-50/50');
+        item.classList.add('border-slate-200', 'bg-white');
+      }
+    });
+  }
+  checkboxes.forEach((cb) => cb.addEventListener('change', updateReadiness));
+
+  // TCO calculator year tabs
+  const tabs = document.querySelectorAll('.year-tab');
+  const competitorTotal = document.getElementById('competitor-total');
+  const selfhostTotal = document.getElementById('selfhost-total');
+  const totalSavings = document.getElementById('total-savings');
+  const savingsLabel = document.getElementById('savings-label');
+  const competitorBarLabel = document.getElementById('competitor-bar-label');
+  const selfhostBarLabel = document.getElementById('selfhost-bar-label');
+  const selfhostBar = document.getElementById('selfhost-bar');
+
+  function updateCalculator(year) {
+    const compTotal = annualPrice * year;
+    const hostTotal = annualHostingCost * year;
+    const save = compTotal - hostTotal;
+
+    competitorTotal.textContent = `$${compTotal.toLocaleString()}`;
+    selfhostTotal.textContent = `$${hostTotal.toLocaleString()}`;
+    competitorBarLabel.textContent = `$${compTotal.toLocaleString()}`;
+    selfhostBarLabel.textContent = `$${hostTotal.toLocaleString()}`;
+
+    totalSavings.textContent = save > 0 ? `$${save.toLocaleString()}` : 'Pays off instantly';
+    savingsLabel.textContent = year === 1 ? 'in year 1 by self-hosting' : `over ${year} years by self-hosting`;
+
+    const hostWidth = Math.min(100, (hostTotal / compTotal) * 100);
+    selfhostBar.style.width = `${hostWidth}%`;
+  }
+
+  tabs.forEach((tab) => {
+    tab.addEventListener('click', () => {
+      tabs.forEach((t) => {
+        t.classList.remove('active-tab', 'bg-purple-600', 'text-white');
+        t.classList.add('text-slate-500');
+      });
+      tab.classList.add('active-tab', 'bg-purple-600', 'text-white');
+      tab.classList.remove('text-slate-500');
+      updateCalculator(parseInt(tab.dataset.year));
+    });
+  });
+
+  const firstTab = document.querySelector('[data-year="1"]');
+  if (firstTab) {
+    firstTab.classList.add('bg-purple-600', 'text-white');
+  }
+</script>
+
+<style>
+    details summary::-webkit-details-marker { display: none; }
+    .year-tab { cursor: pointer; }
+</style>

@@ -1,0 +1,102 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import Header from '../../components/Header.astro';
+import Footer from '../../components/Footer.astro';
+import { competitors } from '../../data/competitors';
+---
+
+<Layout
+  title="Self-Hosted Affiliate Software — Run It On Your Own Servers"
+  description="Stop trusting third-party servers with your affiliate data. RefearnApp is self-hostable — deploy it on your own infrastructure. Alternative to Rewardful, FirstPromoter, Tolt and more."
+>
+  <Header />
+
+  <main class="mx-auto max-w-5xl px-4 py-12 md:px-6 md:py-24">
+
+    <div class="mt-8 mb-16 text-center">
+      <div class="mb-4 inline-flex items-center gap-2 rounded-full bg-purple-50 border border-purple-200 px-4 py-1.5 text-sm font-semibold text-purple-700">
+        🖥️ Self-Hosted · Your Servers · Your Data · Your Rules
+      </div>
+      <h1 class="mt-4 mb-6 text-4xl font-extrabold tracking-tight text-slate-900 md:text-6xl">
+        Self-Hosted<br />
+        <span class="text-primary">Affiliate Software</span>
+      </h1>
+      <p class="mx-auto max-w-2xl text-xl leading-relaxed text-slate-600">
+        Every major affiliate tool keeps your data on their servers — you're renting access, not owning infrastructure.
+        RefearnApp is <strong>fully self-hostable</strong>. Run it on your own VPS for a few dollars a month instead of a recurring subscription.
+      </p>
+    </div>
+
+    <div class="mb-16 grid gap-4 sm:grid-cols-3">
+      {[
+        { icon: '🖥️', title: 'Your Own Infrastructure', desc: 'Deploy on any VPS or cloud provider you already trust and control.' },
+        { icon: '💸', title: 'Pay Hosting, Not Rent', desc: 'A $5-20/mo server beats a $50-300/mo subscription almost every time.' },
+        { icon: '🔒', title: 'Full Data Control', desc: 'No third party ever touches your affiliate data. Backups, uptime, access — all yours.' },
+      ].map((item) => (
+        <div class="rounded-2xl border border-slate-200 bg-white p-6 text-center shadow-sm">
+          <div class="mb-3 text-4xl">{item.icon}</div>
+          <h3 class="mb-2 font-bold text-slate-900">{item.title}</h3>
+          <p class="text-sm text-slate-500">{item.desc}</p>
+        </div>
+      ))}
+    </div>
+
+    <div class="mb-20">
+      <h2 class="mb-8 text-center text-2xl font-bold text-slate-900">
+        Self-Hosted Alternative To Every Major Affiliate Tool
+      </h2>
+      <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        {competitors.map((c) => (
+          <a
+            href={`/self-hosted-alternative/${c.slug}`}
+            class="group rounded-2xl border border-slate-200 bg-white p-6 shadow-sm hover:border-purple-400 hover:shadow-md transition-all"
+          >
+            <div class="mb-3 flex flex-col gap-2">
+              <div class="flex items-start justify-between gap-2">
+                <h3 class="font-bold text-slate-900 group-hover:text-purple-600 transition-colors leading-tight">
+                  {c.name} Alternative
+                </h3>
+                <span class="shrink-0 rounded-full bg-red-50 px-2 py-0.5 text-xs font-semibold text-red-500 whitespace-nowrap self-start">
+                  Cloud Only
+                </span>
+              </div>
+            </div>
+            <p class="mb-4 text-sm text-slate-500">
+              Self-hosted alternative — run it on your own servers
+            </p>
+            <div class="rounded-lg bg-purple-50 border border-purple-100 px-3 py-2 text-center">
+              <span class="text-sm font-bold text-purple-600">🖥️ View Self-Hosted Alternative →</span>
+            </div>
+          </a>
+        ))}
+      </div>
+    </div>
+
+    <div class="mb-16 rounded-2xl border border-purple-100 bg-purple-50 p-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+      <div>
+        <h3 class="font-bold text-slate-900 mb-1">Ready to self-host RefearnApp?</h3>
+        <p class="text-sm text-slate-500">Our documentation walks you through the full setup — no coding experience needed. Just run a few scripts and you're live.</p>
+      </div>
+      <a href="https://refearnapp.com/docs" class="shrink-0 rounded-xl border border-purple-300 bg-white px-5 py-2.5 text-sm font-bold text-purple-700 hover:bg-purple-100 transition-colors whitespace-nowrap">
+        Read the Docs →
+      </a>
+    </div>
+
+    <div class="rounded-3xl bg-linear-to-br from-purple-600 to-indigo-800 p-10 text-center shadow-2xl">
+      <h2 class="mb-4 text-3xl font-extrabold text-white">Run It On Your Own Terms</h2>
+      <p class="mb-8 text-purple-200 text-lg">
+        Self-hosted, open source, one-time payment. Built for founders who want full infrastructure control.
+      </p>
+      <div class="flex flex-col sm:flex-row items-center justify-center gap-4">
+        <a href="https://refearnapp.com/docs" class="rounded-xl bg-white px-8 py-4 text-lg font-bold text-purple-700 hover:bg-purple-50 transition-colors shadow-lg">
+          📘 Read Self-Host Docs
+        </a>
+        <a href="/#pricing" class="rounded-xl border border-purple-300 px-8 py-4 text-lg font-semibold text-white hover:bg-purple-700 transition-colors">
+          Get Lifetime Deal — $199
+        </a>
+      </div>
+    </div>
+
+  </main>
+  <Footer />
+</Layout>

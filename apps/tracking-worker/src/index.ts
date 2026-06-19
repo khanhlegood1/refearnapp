@@ -57,6 +57,9 @@ export default {
 		const isContactPage = url.pathname === '/contact';
 		const isToolPage = url.pathname.startsWith('/tools/');
 		const isComparePage = url.pathname.startsWith('/alternative/');
+		const isOneTimePage = url.pathname.startsWith('/one-time-alternative/');
+		const isOpenSourcePage = url.pathname.startsWith('/open-source-alternative/');
+		const isSelfHostedAlternativePage = url.pathname.startsWith('/self-hosted-alternative/');
 		// Astro compiled files (JS/CSS) always live here.
 		// Your Vercel app likely doesn't use this specific folder name.
 		const isCompiledAsset = url.pathname.startsWith('/_astro/');
@@ -66,7 +69,16 @@ export default {
 			isBlogPage ||
 			isExplicitAsset ||
 			isCompiledAsset ||
-			(!isSelfHosted && (isHome || isLegalPage || isContactPage || isToolPage || isComparePage || isDocsPage));
+			(!isSelfHosted &&
+				(isHome ||
+					isLegalPage ||
+					isContactPage ||
+					isToolPage ||
+					isComparePage ||
+					isOneTimePage ||
+					isOpenSourcePage ||
+					isSelfHostedAlternativePage ||
+					isDocsPage));
 		if (shouldServeAstro) {
 			const resp = await fetch(`${PAGES_URL}${url.pathname}${url.search}`);
 			const newResp = new Response(resp.body, resp);
