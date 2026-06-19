@@ -1,6 +1,5 @@
 ---
 import Logo from './Logo.astro';
-import { competitors } from '../data/competitors.ts';
 import { freeTools } from '../data/tools.ts';
 const currentYear = new Date().getFullYear();
 
@@ -41,6 +40,7 @@ const socials = [
 ];
 
 const alternativeIndexLinks = [
+  { name: 'All Alternatives & Comparisons', href: '/alternative', emoji: '🔍', color: 'text-slate-700' },
   { name: 'One-Time Payment Alternatives', href: '/one-time-alternative', emoji: '💰', color: 'text-indigo-600' },
   { name: 'Open Source Alternatives', href: '/open-source-alternative', emoji: '🔓', color: 'text-indigo-600' },
   { name: 'Self-Hosted Alternatives', href: '/self-hosted-alternative', emoji: '🖥️', color: 'text-purple-600' },
@@ -103,27 +103,15 @@ const alternativeIndexLinks = [
 
       <div>
         <h4 class="mb-4 font-bold text-slate-900">Alternatives</h4>
-        <ul class="no-scrollbar max-h-60 space-y-2 overflow-y-auto pr-2 text-sm">
-          <li class="mb-3 space-y-2 border-b border-slate-100 pb-3">
-            {
-              alternativeIndexLinks.map((item) => (
+        <ul class="space-y-2 text-sm">
+          {
+            alternativeIndexLinks.map((item) => (
+              <li>
                 <a
                   href={item.href}
                   class={`hover:text-primary block font-semibold transition-colors ${item.color}`}
                 >
                   {item.emoji} {item.name}
-                </a>
-              ))
-            }
-          </li>
-          {
-            competitors.map((comp) => (
-              <li>
-
-                <a  href={`/alternative/${comp.slug}`}
-                    class="hover:text-primary whitespace-nowrap text-slate-500 transition-colors"
-                >
-                  {comp.name} Alternative
                 </a>
               </li>
             ))

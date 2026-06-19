@@ -32,14 +32,14 @@ const crossIcon = `<svg class="w-5 h-5 text-slate-300" fill="none" stroke="curre
   title={`${info.name} Alternative: Modern Affiliate Tracking for SaaS (No Revenue Caps)`}
   description={`Looking for a better ${info.name} alternative? RefearnApp offers native Stripe/Paddle coupon tracking, unlimited affiliate partners, and absolute data control.`}
 >
->
   <Header />
 
   <main class="mx-auto max-w-5xl px-4 py-12 md:px-6 md:py-24">
     <div class="mt-8 mb-16 text-center">
       <nav class="mb-4 text-sm text-slate-400">
         <a href="/" class="hover:text-primary">Home</a> /
-        <span class="font-medium text-slate-600">Alternative</span>
+        <a href="/alternative" class="hover:text-primary">Alternatives</a> /
+        <span class="font-medium text-slate-600">{info.name}</span>
       </nav>
       <h1
         class="mt-4 mb-6 text-4xl font-extrabold tracking-tight text-slate-900 md:text-6xl"
@@ -50,16 +50,25 @@ const crossIcon = `<svg class="w-5 h-5 text-slate-300" fill="none" stroke="curre
       <p class="mx-auto max-w-2xl text-xl leading-relaxed text-slate-600">
         Get the reliability of a managed platform with the freedom of open
         source. Start on our <strong>managed cloud</strong> today and <strong
-          >migrate to your own servers</strong
-        > whenever you're ready—no lock-in, no data hostage, just total control.
+      >migrate to your own servers</strong
+      > whenever you're ready—no lock-in, no data hostage, just total control.
       </p>
     </div>
-    <div class="mb-10 text-center">
-
-     <a href={`/one-time-alternative/${info.slug}`}
-      class="inline-flex items-center gap-2 rounded-full border border-green-200 bg-green-50 px-5 py-2 text-sm font-semibold text-green-700 hover:bg-green-100 transition-colors"
+    <div class="mb-10 flex flex-col sm:flex-row items-center justify-center gap-3">
+      <a href={`/one-time-alternative/${info.slug}`}
+         class="inline-flex items-center gap-2 rounded-full border border-green-200 bg-green-50 px-5 py-2 text-sm font-semibold text-green-700 hover:bg-green-100 transition-colors"
       >
-      💰 Looking for a one-time payment lifetime deal? →
+        💰 One-time payment lifetime deal? →
+      </a>
+      <a href={`/open-source-alternative/${info.slug}`}
+         class="inline-flex items-center gap-2 rounded-full border border-indigo-200 bg-indigo-50 px-5 py-2 text-sm font-semibold text-indigo-700 hover:bg-indigo-100 transition-colors"
+      >
+        🔓 Open source alternative? →
+      </a>
+      <a href={`/self-hosted-alternative/${info.slug}`}
+         class="inline-flex items-center gap-2 rounded-full border border-purple-200 bg-purple-50 px-5 py-2 text-sm font-semibold text-purple-700 hover:bg-purple-100 transition-colors"
+      >
+        🖥️ Self-hosted alternative? →
       </a>
     </div>
     <div class="mb-20 grid gap-6 md:grid-cols-2 md:gap-8">
@@ -114,70 +123,70 @@ const crossIcon = `<svg class="w-5 h-5 text-slate-300" fill="none" stroke="curre
         class="overflow-x-auto rounded-3xl border border-slate-200 bg-white shadow-xl"
       >
         <table
-          class="w-full min-w-[700px] border-collapse text-left text-sm md:text-base"
+          class="w-full min-w-175 border-collapse text-left text-sm md:text-base"
         >
           <thead>
-            <tr class="border-b border-slate-200 bg-slate-50/50">
-              <th class="p-6 font-bold tracking-wider text-slate-500 uppercase"
-                >Comparison Feature</th
-              >
-              <th class="p-6 font-bold tracking-wider text-slate-400 uppercase"
-                >{info.name}</th
-              >
-              <th
-                class="bg-indigo-50/50 p-6 font-bold tracking-wider text-indigo-600 uppercase"
-                >RefearnApp</th
-              >
-            </tr>
+          <tr class="border-b border-slate-200 bg-slate-50/50">
+            <th class="p-6 font-bold tracking-wider text-slate-500 uppercase"
+            >Comparison Feature</th
+            >
+            <th class="p-6 font-bold tracking-wider text-slate-400 uppercase"
+            >{info.name}</th
+            >
+            <th
+              class="bg-indigo-50/50 p-6 font-bold tracking-wider text-indigo-600 uppercase"
+            >RefearnApp</th
+            >
+          </tr>
           </thead>
           <tbody class="divide-y divide-slate-100">
-            <tr>
-              <td class="p-6 font-semibold text-slate-900">Software License</td>
-              <td class="p-6 text-slate-500">Proprietary (Closed)</td>
-              <td class="bg-indigo-50/30 p-6 font-bold text-indigo-700"
-                >Open Source (AGPL v3)</td
-              >
-            </tr>
-            <tr>
-              <td class="p-6 font-semibold text-slate-900"
-                >Hosting & Infrastructure</td
-              >
-              <td class="p-6 text-slate-500">Cloud Only</td>
-              <td class="bg-indigo-50/30 p-6 font-bold text-slate-900"
-                >Cloud or Self-Hostable</td
-              >
-            </tr>
-            <tr>
-              <td class="p-6 font-semibold text-slate-900">Data Sovereignty</td>
-              <td class="p-6 text-slate-400" set:html={crossIcon} />
-              <td
-                class="bg-indigo-50/30 p-6 text-indigo-600"
-                set:html={checkIcon}
-              />
-            </tr>
-            <tr>
-              <td class="p-6 font-semibold text-slate-900">Pricing Model</td>
-              <td class="p-6 text-slate-500">Subscription Only</td>
-              <td class="bg-indigo-50/30 p-6 font-bold text-slate-900"
-                >{pricingModelLabel}</td
-              >
-            </tr>
-            <tr>
-              <td class="p-6 font-semibold text-slate-900">Revenue Caps</td>
-              <td class="p-6 text-red-500">Commonly Capped</td>
-              <td class="bg-indigo-50/30 p-6 font-bold text-green-600"
-                >Unlimited Growth</td
-              >
-            </tr>
-            <tr>
-              <td class="p-6 font-semibold text-slate-900"
-                >Custom Domain & Branding</td
-              >
-              <td class="p-6 text-slate-500">Enterprise Add-on</td>
-              <td class="bg-indigo-50/30 p-6 font-bold text-slate-900"
-                >Standard ({PRICES.CUSTOM_DOMAIN_ADDON})</td
-              >
-            </tr>
+          <tr>
+            <td class="p-6 font-semibold text-slate-900">Software License</td>
+            <td class="p-6 text-slate-500">Proprietary (Closed)</td>
+            <td class="bg-indigo-50/30 p-6 font-bold text-indigo-700"
+            >Open Source (AGPL v3)</td
+            >
+          </tr>
+          <tr>
+            <td class="p-6 font-semibold text-slate-900"
+            >Hosting & Infrastructure</td
+            >
+            <td class="p-6 text-slate-500">Cloud Only</td>
+            <td class="bg-indigo-50/30 p-6 font-bold text-slate-900"
+            >Cloud or Self-Hostable</td
+            >
+          </tr>
+          <tr>
+            <td class="p-6 font-semibold text-slate-900">Data Sovereignty</td>
+            <td class="p-6 text-slate-400" set:html={crossIcon} />
+            <td
+              class="bg-indigo-50/30 p-6 text-indigo-600"
+              set:html={checkIcon}
+            />
+          </tr>
+          <tr>
+            <td class="p-6 font-semibold text-slate-900">Pricing Model</td>
+            <td class="p-6 text-slate-500">Subscription Only</td>
+            <td class="bg-indigo-50/30 p-6 font-bold text-slate-900"
+            >{pricingModelLabel}</td
+            >
+          </tr>
+          <tr>
+            <td class="p-6 font-semibold text-slate-900">Revenue Caps</td>
+            <td class="p-6 text-red-500">Commonly Capped</td>
+            <td class="bg-indigo-50/30 p-6 font-bold text-green-600"
+            >Unlimited Growth</td
+            >
+          </tr>
+          <tr>
+            <td class="p-6 font-semibold text-slate-900"
+            >Custom Domain & Branding</td
+            >
+            <td class="p-6 text-slate-500">Enterprise Add-on</td>
+            <td class="bg-indigo-50/30 p-6 font-bold text-slate-900"
+            >Standard ({PRICES.CUSTOM_DOMAIN_ADDON})</td
+            >
+          </tr>
           </tbody>
         </table>
       </div>
@@ -204,6 +213,11 @@ const crossIcon = `<svg class="w-5 h-5 text-slate-300" fill="none" stroke="curre
           ))
         }
       </div>
+      <p class="mt-6 text-center">
+        <a href="/alternative" class="text-sm font-semibold text-primary hover:underline">
+          View all alternatives →
+        </a>
+      </p>
     </div>
 
     <div class="mb-24">

@@ -56,10 +56,10 @@ export default {
 		const isLegalPage = ['/terms', '/privacy-policy', '/refund-policy'].includes(url.pathname);
 		const isContactPage = url.pathname === '/contact';
 		const isToolPage = url.pathname.startsWith('/tools/');
-		const isComparePage = url.pathname.startsWith('/alternative/');
-		const isOneTimePage = url.pathname.startsWith('/one-time-alternative/');
-		const isOpenSourcePage = url.pathname.startsWith('/open-source-alternative/');
-		const isSelfHostedAlternativePage = url.pathname.startsWith('/self-hosted-alternative/');
+		const isComparePage = url.pathname === '/alternative' || url.pathname.startsWith('/alternative/');
+		const isOneTimePage = url.pathname === '/one-time-alternative' || url.pathname.startsWith('/one-time-alternative/');
+		const isOpenSourcePage = url.pathname === '/open-source-alternative' || url.pathname.startsWith('/open-source-alternative/');
+		const isSelfHostedAlternativePage = url.pathname === '/self-hosted-alternative' || url.pathname.startsWith('/self-hosted-alternative/');
 		// Astro compiled files (JS/CSS) always live here.
 		// Your Vercel app likely doesn't use this specific folder name.
 		const isCompiledAsset = url.pathname.startsWith('/_astro/');
