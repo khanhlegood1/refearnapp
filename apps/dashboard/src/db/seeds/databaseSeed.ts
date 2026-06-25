@@ -116,7 +116,7 @@ const REFERRER_CHANNELS = [
 ]
 
 export const affiliate_click_seed = affiliate_link_seed.flatMap((link) => {
-  const clicksCount = randomInt(1, 4)
+  const clicksCount = randomInt(80, 250)
 
   return Array.from({ length: clicksCount }, () => {
     const date = randomDateIn2026()
@@ -262,13 +262,31 @@ export const promotion_codes_seed = affiliate_seed.flatMap((affiliate, idx) => {
 })
 
 export const referrals_seed = affiliate_seed.flatMap((affiliate, idx) => {
-  const count = idx === 0 ? 60 : 5
   const promo = promotion_codes_seed.find((p) => p.affiliateId === affiliate.id)
-  const link = affiliate_link_seed.find((l) => l.affiliateId === affiliate.id)
+  const links = affiliate_link_seed.filter(
+    (l) => l.affiliateId === affiliate.id
+  )
+  const totalClicksForAffiliate = affiliate_click_seed.filter((c) =>
+    links.some((l) => l.id === c.affiliateLinkId)
+  )
+  const conversionRate = randomInt(5, 15) / 100
+  const maxSignups = Math.max(
+    1,
+    Math.floor(totalClicksForAffiliate.length * conversionRate)
+  )
+  const count = idx === 0 ? Math.min(60, maxSignups) : Math.min(5, maxSignups)
 
   return Array.from({ length: count }, (_, i) => {
     const isConverted = i % 3 === 0
-    const signedAt = randomDateIn2026()
+    const matchingClick =
+      totalClicksForAffiliate[i % totalClicksForAffiliate.length]
+    const signedAt = matchingClick
+      ? matchingClick.createdAt
+      : randomDateIn2026()
+    const linkId = matchingClick
+      ? matchingClick.affiliateLinkId
+      : links[0]?.id || null
+
     const safeAffiliateName = affiliate.name.replace(/\s+/g, "_")
 
     return {
@@ -277,7 +295,7 @@ export const referrals_seed = affiliate_seed.flatMap((affiliate, idx) => {
       organizationId: ORG_ID,
       signupEmail: `user_${i}_${safeAffiliateName}@example.com`,
       promotionCodeId: i % 2 === 0 ? promo?.id : null,
-      affiliateLinkId: i % 2 !== 0 ? link?.id : null,
+      affiliateLinkId: i % 2 !== 0 ? linkId : null,
       signedAt: signedAt,
       convertedAt: isConverted
         ? new Date(signedAt.getTime() + randomInt(1, 4) * 86400000)
