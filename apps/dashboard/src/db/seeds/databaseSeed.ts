@@ -1,3 +1,4 @@
+import { faker } from "@faker-js/faker"
 import {
   buildAuthCustomizationSeed,
   buildDashboardCustomizationSeed,
@@ -33,23 +34,53 @@ const randomDateIn2026 = () => {
   return new Date(Date.UTC(2026, month, day, hour, minute, second))
 }
 
-export const affiliate_seed = Array.from({ length: 20 }, (_, i) => {
-  // Logic for the first entry vs the rest
-  const isFirst = i === 0
+export const PROMOTION_METHODS = [
+  "social_media",
+  "blog_website",
+  "email_marketing",
+  "paid_ads",
+  "content_creation",
+  "offline_networking",
+  "other",
+] as const
 
-  const name = isFirst ? "zekariyas" : `zak${i}`
-  const email = isFirst ? "zekariyasberihun8@gmail.com" : `zak${i}@gmail.com`
+export const affiliate_seed = Array.from({ length: 20 }, (_, i) => {
+  const isLast = i === 19
+
+  const firstName = isLast
+    ? "zekariyas"
+    : faker.person.firstName().toLowerCase()
+  const lastName = isLast ? "berihun" : faker.person.lastName().toLowerCase()
+
+  const name = isLast ? "zekariyas" : `${firstName} ${lastName}`
+  const email = isLast
+    ? "zekariyasberihun8@gmail.com"
+    : `${firstName}.${lastName}@example.com`
+
+  // Generate 1-3 random promotion methods
+  const methodsCount = randomInt(1, 3)
+  const shuffledMethods = [...PROMOTION_METHODS].sort(() => 0.5 - Math.random())
+  const promotionMethods = shuffledMethods.slice(0, methodsCount)
 
   return {
     id: crypto.randomUUID(),
     name: name,
     email: email,
     type: "AFFILIATE" as const,
+    status: "active" as const,
+    promotionMethods: promotionMethods,
+    promotionDetails: `Promoting primarily via ${promotionMethods.join(", ")} targeting niche B2B SaaS audiences.`,
+    websiteUrl: isLast
+      ? "https://refearnapp.com"
+      : `https://${firstName}marketing.com`,
+    socialHandle: `@${firstName}_shares`,
+    onboardingCompleted: true,
     organizationId: ORG_ID,
     createdAt: new Date(),
     updatedAt: new Date(),
   }
 })
+
 export const affiliate_link_seed = affiliate_seed.flatMap((affiliate) => {
   const firstDate = randomDateIn2026()
   const secondDate = randomDateIn2026()
@@ -71,21 +102,36 @@ export const affiliate_link_seed = affiliate_seed.flatMap((affiliate) => {
     },
   ]
 })
+
+const REFERRER_CHANNELS = [
+  "direct",
+  "x.com",
+  "facebook.com",
+  "linkedin.com",
+  "instagram.com",
+  "reddit.com",
+  "github.com",
+  "indiehackers.com",
+  "producthunt.com",
+]
+
 export const affiliate_click_seed = affiliate_link_seed.flatMap((link) => {
   const clicksCount = randomInt(1, 4)
 
   return Array.from({ length: clicksCount }, () => {
     const date = randomDateIn2026()
+    const referrer =
+      REFERRER_CHANNELS[randomInt(0, REFERRER_CHANNELS.length - 1)]
 
     return {
       id: generateAffiliateClickId(),
       affiliateLinkId: link.id,
       userAgent:
         "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36",
-      referrer: "unknown",
-      deviceType: "desktop",
-      browser: "Chrome",
-      os: "Windows",
+      referrer: referrer,
+      deviceType: Math.random() > 0.3 ? "desktop" : "mobile",
+      browser: Math.random() > 0.2 ? "Chrome" : "Safari",
+      os: Math.random() > 0.5 ? "Windows" : "MacOS",
       createdAt: date,
       updatedAt: date,
     }
@@ -98,7 +144,25 @@ export const affiliate_invoice_seed = affiliate_link_seed.flatMap((link) => {
   return Array.from({ length: invoiceCount }, () => {
     const date = randomDateIn2026()
     const amount = randomInt(10, 100)
-    const commission = Math.round(amount * 0.5 * 100) / 100 // 50%
+    const commission = Math.round(amount * 0.5 * 100) / 100
+    const roll = Math.random()
+    let paidAmount = 0
+    let unpaidAmount = commission
+    let status: "pending" | "paid" = "pending"
+
+    if (roll > 0.7) {
+      paidAmount = commission
+      unpaidAmount = 0
+      status = "paid" as const
+    } else if (roll > 0.3) {
+      paidAmount = Math.round(commission * 0.4 * 100) / 100
+      unpaidAmount = Math.round((commission - paidAmount) * 100) / 100
+      status = "pending" as const
+    } else {
+      paidAmount = 0
+      unpaidAmount = commission
+      status = "pending" as const
+    }
 
     return {
       id: generateAffiliatePaymentLinkId(),
@@ -111,10 +175,11 @@ export const affiliate_invoice_seed = affiliate_link_seed.flatMap((link) => {
       rawAmount: amount.toFixed(2),
       rawCurrency: "USD",
       commission: commission.toFixed(2),
-      paidAmount: "0.00",
-      unpaidAmount: commission.toFixed(2),
+      paidAmount: paidAmount.toFixed(2),
+      unpaidAmount: unpaidAmount.toFixed(2),
       affiliateLinkId: link.id,
       reason: INVOICE_REASONS[randomInt(0, INVOICE_REASONS.length - 1)],
+      status: status,
       createdAt: date,
       updatedAt: date,
     }
@@ -141,11 +206,12 @@ export const organization_seed = [
     attributionModel: "LAST_CLICK" as const,
   },
 ]
+
 export const websiteDomain_seed = [
   {
     id: "4G7kH2B",
     orgId: "tp7JLBb5",
-    domainName: "xmm.refearnapp.com", // updated column name
+    domainName: "xmm.refearnapp.com",
     type: "DEFAULT" as const,
     isActive: true,
     isRedirect: false,
@@ -156,6 +222,7 @@ export const websiteDomain_seed = [
     updatedAt: parseDate("2025-10-14 04:00:00"),
   },
 ]
+
 export const organization_auth_customization_seed = [
   buildAuthCustomizationSeed({
     id: "tp7JLBb5",
@@ -171,11 +238,12 @@ export const organization_auth_customization_seed = [
     updatedAt: parseDate("2025-08-12 22:15:36.47"),
   }),
 ]
+
 export const promotion_codes_seed = affiliate_seed.flatMap((affiliate, idx) => {
   const count = idx === 0 ? 25 : 2
   return Array.from({ length: count }, (_, i) => ({
     id: crypto.randomUUID(),
-    code: `PROMO_${i}_${affiliate.name.toUpperCase()}`,
+    code: `PROMO_${i}_${affiliate.name.replace(/\s+/g, "_").toUpperCase()}`,
     externalId: `ext_${crypto.randomUUID().slice(0, 8)}_${i}`,
     provider: "paddle" as const,
     isActive: true,
@@ -192,6 +260,7 @@ export const promotion_codes_seed = affiliate_seed.flatMap((affiliate, idx) => {
     updatedAt: new Date(),
   }))
 })
+
 export const referrals_seed = affiliate_seed.flatMap((affiliate, idx) => {
   const count = idx === 0 ? 60 : 5
   const promo = promotion_codes_seed.find((p) => p.affiliateId === affiliate.id)
@@ -200,12 +269,13 @@ export const referrals_seed = affiliate_seed.flatMap((affiliate, idx) => {
   return Array.from({ length: count }, (_, i) => {
     const isConverted = i % 3 === 0
     const signedAt = randomDateIn2026()
+    const safeAffiliateName = affiliate.name.replace(/\s+/g, "_")
 
     return {
       id: crypto.randomUUID(),
       affiliateId: affiliate.id,
       organizationId: ORG_ID,
-      signupEmail: `user_${i}_${affiliate.name}@example.com`,
+      signupEmail: `user_${i}_${safeAffiliateName}@example.com`,
       promotionCodeId: i % 2 === 0 ? promo?.id : null,
       affiliateLinkId: i % 2 !== 0 ? link?.id : null,
       signedAt: signedAt,
@@ -220,6 +290,7 @@ export const referrals_seed = affiliate_seed.flatMap((affiliate, idx) => {
     }
   })
 })
+
 export const organization_dashboard_customization_seed = [
   buildDashboardCustomizationSeed({
     id: "tp7JLBb5",
@@ -234,36 +305,25 @@ export const organization_dashboard_customization_seed = [
     updatedAt: parseDate("2025-08-12 20:11:21.372"),
   }),
 ]
+
 export const user_seed = [
   {
     id: "29022934-eb52-49af-aca4-b6ed553c89dd",
-    name: "zak",
-    email: "zekariyasberihun8@gmail.com",
+    name: "Acme Admin",
+    email: "admin@acmeinc.com", // Updated admin user identity
     role: "OWNER" as const,
     type: "ORGANIZATION" as const,
     createdAt: parseDate("2025-07-16 11:43:21.288497"),
     updatedAt: parseDate("2025-07-16 11:43:21.288497"),
   },
 ]
-// export const subscription_seed = [
-//   {
-//     id: "sub_01k9xy70e1jds4mmtzr5qex4ak",
-//     userId: "29022934-eb52-49af-aca4-b6ed553c89dd",
-//     plan: "FREE" as const,
-//     billingInterval: "MONTHLY" as const,
-//     currency: "USD",
-//     price: "0.00",
-//     expiresAt: parseDate("2099-12-31 23:59:59"),
-//     createdAt: parseDate("2025-07-16 11:43:21.288497"),
-//     updatedAt: parseDate("2025-07-16 11:43:21.288497"),
-//   },
-// ]
+
 export const account_seed = [
   {
-    id: "f1a2b3c4-d5e6-7f89-0123-456789abcdef", // constant UUID
+    id: "f1a2b3c4-d5e6-7f89-0123-456789abcdef",
     userId: "29022934-eb52-49af-aca4-b6ed553c89dd",
     provider: "credentials" as const,
-    providerAccountId: "zak@gmail.com",
+    providerAccountId: "admin@acmeinc.com", // Linked to the clean admin credentials profile
     password: "$2b$10$StHXjJi6UvIye0GVPmDp4uRXnjAuBAuqNZhnzTLb24U0.l98LjH3C",
     emailVerified: parseDate("2025-07-16 11:43:21.288497"),
     createdAt: parseDate("2025-07-16 11:43:21.288497"),
@@ -281,6 +341,7 @@ export const affiliate_account_seed = affiliate_seed.map((affiliate) => ({
   createdAt: new Date(),
   updatedAt: new Date(),
 }))
+
 export const affiliate_payout_method_seed = affiliate_seed.map(
   (affiliate, index) => ({
     id: crypto.randomUUID(),
@@ -293,15 +354,15 @@ export const affiliate_payout_method_seed = affiliate_seed.map(
     updatedAt: new Date(),
   })
 )
+
 export const team_seed = Array.from({ length: 20 }, (_, i) => {
-  const isFirst = i === 0
-  const name = isFirst ? "zekariyas" : `zak${i}`
-  const email = isFirst ? "zekariyasberihun8@gmail.com" : `zak${i}@gmail.com`
+  const firstName = faker.person.firstName().toLowerCase()
+  const lastName = faker.person.lastName().toLowerCase()
 
   return {
     id: crypto.randomUUID(),
-    name: name,
-    email: email,
+    name: `${firstName} ${lastName}`,
+    email: `${firstName}.${lastName}@acmeinc.com`,
     role: "TEAM" as const,
     type: "ORGANIZATION" as const,
     organizationId: ORG_ID,
@@ -310,6 +371,7 @@ export const team_seed = Array.from({ length: 20 }, (_, i) => {
     updatedAt: new Date(),
   }
 })
+
 export const team_account_seed = team_seed.map((team) => ({
   id: crypto.randomUUID(),
   teamId: team.id,
@@ -320,6 +382,7 @@ export const team_account_seed = team_seed.map((team) => ({
   createdAt: new Date(),
   updatedAt: new Date(),
 }))
+
 export const purchase_seed = [
   {
     id: "pur_ultimate_lifetime",
