@@ -69,6 +69,9 @@ export type AttributionModel = (typeof ATTRIBUTION_MODELS)[number]
 export const PAYOUT_PROVIDERS = ["paypal", "wise", "payoneer"] as const
 export type PayoutProvider = (typeof PAYOUT_PROVIDERS)[number]
 
+export const APPSUMO_STATUSES = ["active", "claimed", "deactivated"] as const
+export type AppSumoStatus = (typeof APPSUMO_STATUSES)[number]
+
 export const PROGRAM_TYPES = ["open", "invite_only", "application"] as const
 export type ProgramType = (typeof PROGRAM_TYPES)[number]
 
@@ -235,6 +238,23 @@ export const account = pgTable(
   (table) => [
     index("account_user_id_created_at_idx").on(table.userId, table.createdAt),
     index("account_created_at_idx").on(table.createdAt),
+  ]
+)
+export const appsumoKeys = pgTable(
+  "appsumo_keys",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    key: text("key").notNull().unique(),
+    tier: integer("tier").notNull(),
+    status: text("status").$type<AppSumoStatus>().default("active").notNull(),
+    userId: uuid("user_id").references(() => user.id, { onDelete: "cascade" }),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at").defaultNow().notNull(),
+    redeemedAt: timestamp("redeemed_at"),
+  },
+  (table) => [
+    index("appsumo_keys_key_idx").on(table.key),
+    index("appsumo_keys_user_id_idx").on(table.userId),
   ]
 )
 export const subscription = pgTable(
