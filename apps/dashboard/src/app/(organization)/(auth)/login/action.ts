@@ -107,7 +107,9 @@ export const LoginServer = async ({
       return {
         ok: true,
         toast: "Logged in successfully!",
-        redirectUrl: activeOrgId ? "/dashboard" : "/create-company",
+        redirectUrl: activeOrgId
+          ? `/organization/${activeOrgId}/dashboard/analytics`
+          : "/create-company",
       }
     }
 

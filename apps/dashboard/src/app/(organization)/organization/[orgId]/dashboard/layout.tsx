@@ -16,6 +16,7 @@ import { getUserData } from "@/lib/server/organization/getUserProfile"
 import { checkVersion } from "@/lib/server/organization/check-update"
 import { SystemUpdate } from "@/components/ui-custom/SystemUpdate"
 import { getLicense } from "@/lib/server/organization/getLicense"
+import { EmailVerificationWrapper } from "@/components/ui-custom/EmailVerificationWrapper"
 interface OrganizationDashboardLayoutProps extends OrgIdProps {
   children: React.ReactNode
 }
@@ -51,6 +52,7 @@ export default async function DashboardLayout({
         </div>
         <div className="py-6 px-6 w-full max-w-7xl mx-auto">
           <SystemUpdate variant="banner" updateInfo={updateInfo} />
+          <EmailVerificationWrapper orgId={orgId} plan={plan} user={user} />
           <SubscriptionStatusBanner plan={plan} orgId={orgId} />
           {children}
         </div>
