@@ -10,11 +10,12 @@ export const GET = handleRoute("Google Auth Redirect", async (req) => {
   const rememberMe = url.searchParams.get("rememberMe") === "true"
   const page = url.searchParams.get("page") || "login"
   const txn = url.searchParams.get("txn") || undefined
+  const appsumoKey = url.searchParams.get("appsumoKey") || undefined
 
   const baseUrl = await getBaseUrl()
 
   const state = encodeURIComponent(
-    JSON.stringify({ type, orgId, rememberMe, baseUrl, page, txn })
+    JSON.stringify({ type, orgId, rememberMe, baseUrl, page, txn, appsumoKey })
   )
 
   const params = new URLSearchParams({

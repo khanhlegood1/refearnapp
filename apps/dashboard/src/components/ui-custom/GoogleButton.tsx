@@ -13,6 +13,7 @@ type GoogleButtonProps = {
   page?: "login" | "signup"
   isTeam?: boolean
   disabled?: boolean
+  appsumoKey?: string
 }
 
 export function GoogleButton({
@@ -23,6 +24,7 @@ export function GoogleButton({
   page,
   isTeam = false,
   disabled,
+  appsumoKey,
 }: GoogleButtonProps) {
   const {
     googleButtonTextColor,
@@ -40,7 +42,7 @@ export function GoogleButton({
     if (isPreview) {
       window.open("https://www.google.com", "_blank")
     } else {
-      window.location.href = `/api/auth/google?type=${type}&orgId=${orgId}&rememberMe=${rememberMe}&page=${page}&txn=${txnId || ""}`
+      window.location.href = `/api/auth/google?type=${type}&orgId=${orgId}&rememberMe=${rememberMe}&page=${page}&txn=${txnId || ""}&appsumoKey=${appsumoKey || ""}`
     }
   }
   const buttonStyles = affiliate

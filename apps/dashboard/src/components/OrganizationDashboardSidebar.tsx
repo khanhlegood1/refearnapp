@@ -258,7 +258,7 @@ const OrganizationDashboardSidebar = ({
     if (plan.type === "EXPIRED" && plan.plan === "ULTIMATE")
       return "Renew Subscription"
     if (plan.type === "PURCHASE" && plan.plan === "PRO")
-      return "Purchase Ultimate Bundle"
+      return plan.isAppSumo ? "Upgrade on AppSumo" : "Purchase Ultimate Bundle"
     if (plan.type === "SUBSCRIPTION" && plan.plan === "PRO") return "Upgrade"
     return ""
   }
@@ -304,9 +304,11 @@ const OrganizationDashboardSidebar = ({
               dialogMode === "upgrade"
                 ? plan.plan === "FREE"
                   ? "You need to upgrade or purchase a plan to create a new organization."
-                  : plan.type === "PURCHASE"
-                    ? "You need to purchase the Ultimate bundle to create a new company."
-                    : "You need to upgrade to Ultimate to create a new company."
+                  : plan.isAppSumo
+                    ? "You need to upgrade your AppSumo license tier to create additional companies."
+                    : plan.type === "PURCHASE"
+                      ? "You need to purchase the Ultimate bundle to create a new company."
+                      : "You need to upgrade to Ultimate to create a new company."
                 : dialogMode === "expired"
                   ? `Your ${plan.plan} plan has expired. Please renew to continue accessing premium features.`
                   : undefined
@@ -322,7 +324,14 @@ const OrganizationDashboardSidebar = ({
               dialogMode === "upgrade" || dialogMode === "expired"
                 ? () => {
                     setDialogOpen(false)
-                    setTimeout(() => handlePlanRedirect(orgId!, router), 150)
+                    if (plan.isAppSumo) {
+                      window.open(
+                        "https://appsumo.com/products/refearnapp",
+                        "_blank"
+                      )
+                    } else {
+                      setTimeout(() => handlePlanRedirect(orgId!, router), 150)
+                    }
                   }
                 : undefined
             }

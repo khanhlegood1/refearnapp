@@ -12,14 +12,17 @@ import {
   teamAccount,
   team,
   organization,
+  appsumoKeys,
+  purchase,
 } from "@/db/schema"
-import { eq } from "drizzle-orm"
+import { and, eq } from "drizzle-orm"
 import { buildAffiliateUrl } from "@/util/Url"
 import { assignFreeTrialSubscription } from "@/lib/server/organization/assignFreeTrial"
 import { assignLifetimePurchase } from "@/lib/server/organization/assignLifetimePurchase"
 import { handleRoute } from "@/lib/handleRoute"
-import { AppError } from "@/lib/exceptions" // Assuming you have this for custom errors
+import { AppError } from "@/lib/exceptions" 
 import { restrictSelfHostedSignup } from "@/lib/server/organization/selfHostedGuards"
+import { mapTierToPurchasePlan } from "@/util/appsumo"
 
 export const GET = handleRoute("Google OAuth Callback", async (req) => {
   const CLIENT_ID = process.env.GOOGLE_CLIENT_ID!
@@ -34,6 +37,7 @@ export const GET = handleRoute("Google OAuth Callback", async (req) => {
   const baseUrl = state.baseUrl || process.env.NEXT_PUBLIC_BASE_URL
   const page = state.page || "login"
   const rememberMe = !!state.rememberMe
+  const appsumoKeyFromState = state.appsumoKey as string | undefined
   const type = (state.type || "organization") as
     | "organization"
     | "affiliate"
@@ -170,6 +174,26 @@ export const GET = handleRoute("Google OAuth Callback", async (req) => {
         if (txnId) await assignLifetimePurchase(existingUserByEmail.id, txnId)
       } else {
         await restrictSelfHostedSignup()
+        let targetTier: "PRO" | "ULTIMATE" = "PRO"
+        if (appsumoKeyFromState) {
+          const cleanKey = appsumoKeyFromState.trim()
+          const keyRecord = await db.query.appsumoKeys.findFirst({
+            where: and(
+              eq(appsumoKeys.key, cleanKey),
+              eq(appsumoKeys.status, "active")
+            ),
+          })
+
+          if (!keyRecord) {
+            throw new AppError({
+              status: 400,
+              error: "INVALID_APPSUMO_KEY",
+              toast:
+                "This AppSumo license key is invalid or has already been claimed.",
+            })
+          }
+          targetTier = mapTierToPurchasePlan(keyRecord.tier)
+        }
         const [createdUser] = await db
           .insert(user)
           .values({ name, image, email, type: "ORGANIZATION", role: "OWNER" })
@@ -181,7 +205,26 @@ export const GET = handleRoute("Google OAuth Callback", async (req) => {
           providerAccountId: googleSub,
           emailVerified: new Date(),
         })
-        if (txnId) {
+        if (appsumoKeyFromState) {
+          const cleanKey = appsumoKeyFromState.trim()
+          await db
+            .update(appsumoKeys)
+            .set({
+              status: "claimed",
+              userId: appUser.id,
+              redeemedAt: new Date(),
+              updatedAt: new Date(),
+            })
+            .where(eq(appsumoKeys.key, cleanKey))
+          await db.insert(purchase).values({
+            userId: appUser.id,
+            tier: targetTier,
+            price: "0.00",
+            currency: "USD",
+            isActive: true,
+            reason: "CONVERT_TO_ONE_TIME",
+          })
+        } else if (txnId) {
           await assignLifetimePurchase(appUser.id, txnId)
         } else {
           if (process.env.NEXT_PUBLIC_SELF_HOSTED !== "true") {

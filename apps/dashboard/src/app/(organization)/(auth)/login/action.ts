@@ -7,6 +7,7 @@ import { sendVerificationEmail } from "@/lib/verificationEmail"
 import { MutationData } from "@/lib/types/organization/response"
 import { handleAction } from "@/lib/handleAction"
 import { AppError } from "@/lib/exceptions"
+import { cookies } from "next/headers"
 
 export const LoginServer = async ({
   email,
@@ -30,7 +31,6 @@ export const LoginServer = async ({
       })
     }
 
-    // Find the user by email
     const existingUser = await db.query.user.findFirst({
       where: (u, { eq }) => eq(u.email, email),
     })
@@ -44,7 +44,6 @@ export const LoginServer = async ({
       })
     }
 
-    // Find the user account with provider = 'credentials'
     const userAcc = await db.query.account.findFirst({
       where: (ua, { and, eq }) =>
         and(eq(ua.userId, existingUser.id), eq(ua.provider, "credentials")),
@@ -69,13 +68,48 @@ export const LoginServer = async ({
       })
     }
 
-    // Get organizations owned by this user
     const orgs = await db.query.organization.findMany({
       where: (org, { eq }) => eq(org.userId, existingUser.id),
     })
 
     const orgIds = orgs.map((o) => o.id)
     const activeOrgId = orgIds.length > 0 ? orgIds[0] : undefined
+
+    const appsumoClaim = await db.query.appsumoKeys.findFirst({
+      where: (k, { and, eq, ne }) =>
+        and(eq(k.userId, existingUser.id), ne(k.status, "deactivated")),
+    })
+    if (appsumoClaim) {
+      const sessionPayload = {
+        id: existingUser.id,
+        email: existingUser.email,
+        role: existingUser.role,
+        type: existingUser.type,
+        orgIds,
+        activeOrgId,
+        rememberMe,
+      }
+      const tokenExpiry = rememberMe ? "30d" : "1d"
+      const sessionToken = jwt.sign(sessionPayload, process.env.SECRET_KEY!, {
+        expiresIn: tokenExpiry,
+      })
+
+      const cookieStore = await cookies()
+      cookieStore.set({
+        name: "organizationToken",
+        value: sessionToken,
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "lax",
+        ...(rememberMe && { maxAge: 60 * 60 * 24 * 30 }),
+      })
+
+      return {
+        ok: true,
+        toast: "Logged in successfully!",
+        redirectUrl: activeOrgId ? "/dashboard" : "/create-company",
+      }
+    }
 
     const token = jwt.sign(
       {

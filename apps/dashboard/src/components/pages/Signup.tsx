@@ -38,6 +38,7 @@ import { useContrastColor } from "@/hooks/useContrastColor"
 import { PoweredByBranding } from "@/components/ui-custom/PoweredByBranding"
 import { registrationSettingsAtom } from "@/store/RegistrationSettingsAtom"
 import { useBrandingPreference } from "@/hooks/useBrandingPreference"
+import { SignupAppSumoServer } from "@/app/(organization)/(auth)/appsumo-signup/action"
 type Props = {
   orgId?: string
   isPreview?: boolean
@@ -45,6 +46,7 @@ type Props = {
   affiliate: boolean
   isTeam?: boolean
   inviteToken?: string
+  appsumoKey?: string
 }
 const Signup = ({
   orgId,
@@ -53,6 +55,7 @@ const Signup = ({
   affiliate,
   isTeam = false,
   inviteToken,
+  appsumoKey,
 }: Props) => {
   const [previewLoading, setPreviewLoading] = useState(false)
   const isSelfHosted = process.env.NEXT_PUBLIC_SELF_HOSTED === "true"
@@ -60,6 +63,7 @@ const Signup = ({
   const { customNotesSignup } = useAtomValue(notesCustomizationAtom)
   const urlParams = new URLSearchParams(window.location.search)
   const txnId = urlParams.get("txn")
+  const activeAppSumoKey = appsumoKey || urlParams.get("key")
   const form = useForm<SignUpFormValues>({
     resolver: zodResolver(signUpSchema),
     defaultValues: {
@@ -111,6 +115,15 @@ const Signup = ({
       }
     },
   })
+  const appsumoMutation = useAppMutation(SignupAppSumoServer, {
+    affiliate: false,
+    disableSuccessToast: true,
+    onSuccess: (res: any) => {
+      if (!res.ok) {
+        emailCache.addFailedValue(res.data)
+      }
+    },
+  })
   const teamMutation = useAppMutation(SignupTeamServer, {
     affiliate,
     disableSuccessToast: true,
@@ -135,7 +148,9 @@ const Signup = ({
       ? teamMutation.isPending
       : orgId
         ? affiliateMutation.isPending
-        : normalMutation.isPending
+        : appsumoKey
+          ? appsumoMutation.isPending
+          : normalMutation.isPending
   const isTosRequired = !!(
     regSettings.showTos &&
     regSettings.tosUrl &&
@@ -176,6 +191,15 @@ const Signup = ({
       const email = data.email.trim().toLowerCase()
       if (emailCache.shouldSkip(email)) return
       affiliateMutation.mutate({ ...data, organizationId: orgId, inviteToken })
+    } else if (appsumoKey) {
+      const email = data.email.trim().toLowerCase()
+      if (emailCache.shouldSkip(email)) return
+      appsumoMutation.mutate({
+        name: data.name,
+        email: data.email,
+        password: data.password,
+        appsumoKey: appsumoKey,
+      })
     } else {
       const email = data.email.trim().toLowerCase()
       if (emailCache.shouldSkip(email)) return
@@ -407,6 +431,7 @@ const Signup = ({
                     page="signup"
                     isTeam={isTeam}
                     disabled={isBlockedByTos}
+                    appsumoKey={activeAppSumoKey || undefined}
                   />
                 </div>
 

@@ -1,24 +1,29 @@
 import { db } from "@/db/drizzle"
-import { organization, subscription, purchase } from "@/db/schema"
+import { organization, subscription, purchase, appsumoKeys } from "@/db/schema"
 import { eq } from "drizzle-orm"
 import { getOrgAuthForPlan } from "@/lib/server/organization/getOrgAuthForPlan"
 import type { PlanInfo } from "@/lib/types/organization/planInfo"
+import { mapTierToPurchasePlan } from "@/util/appsumo"
 
 // 1. Core Logic: The only place where the plan calculation lives
 async function getPlanByUserId(userId: string): Promise<PlanInfo> {
-  const [userSub, userPurchase] = await Promise.all([
+  const [userSub, userPurchase, appsumoKey] = await Promise.all([
     db.query.subscription.findFirst({ where: eq(subscription.userId, userId) }),
     db.query.purchase.findFirst({
       where: eq(purchase.userId, userId),
       orderBy: (purchase, { desc }) => [desc(purchase.tier)],
     }),
+    db.query.appsumoKeys.findFirst({
+      where: eq(appsumoKeys.userId, userId),
+    }),
   ])
 
   // Helper for validity
-  const isValid = (sub: typeof subscription.$inferSelect | null) =>
-    sub?.expiresAt && sub.expiresAt.getTime() >= Date.now()
+
   const base = { userId }
   if (userSub) {
+    const isValid = (sub: typeof subscription.$inferSelect | null) =>
+      sub?.expiresAt && sub.expiresAt.getTime() >= Date.now()
     if (isValid(userSub)) {
       return {
         ...base,
@@ -46,6 +51,16 @@ async function getPlanByUserId(userId: string): Promise<PlanInfo> {
       ...base,
       plan: userPurchase.tier === "ULTIMATE" ? "ULTIMATE" : "PRO",
       type: "PURCHASE",
+    }
+  }
+
+  if (appsumoKey && appsumoKey.status === "active") {
+    return {
+      ...base,
+      plan: mapTierToPurchasePlan(appsumoKey.tier),
+      type: "PURCHASE",
+      isAppSumo: true,
+      appsumoTier: appsumoKey.tier,
     }
   }
 

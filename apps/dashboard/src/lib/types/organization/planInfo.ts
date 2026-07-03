@@ -7,4 +7,6 @@ export interface PlanInfo {
   pendingPurchaseTier?: "PRO" | "ULTIMATE"
   subscriptionChangeAt?: Date | null
   userId?: string
+  isAppSumo?: boolean
+  appsumoTier?: number
 }

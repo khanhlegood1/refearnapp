@@ -1,4 +1,4 @@
-import { user } from "@/db/schema"
+import { account, user } from "@/db/schema"
 import { AppError } from "@/lib/exceptions"
 import { eq } from "drizzle-orm"
 import { db } from "@/db/drizzle"
@@ -7,7 +7,7 @@ import { handleAction } from "@/lib/handleAction"
 import { SafeUserWithCapabilities } from "@/lib/types/organization/authUser"
 import { ActionResult } from "@/lib/types/organization/response"
 export const getUserData = async (): Promise<
-  ActionResult<SafeUserWithCapabilities>
+  ActionResult<SafeUserWithCapabilities & { emailVerified: boolean }>
 > => {
   return handleAction("getUserData", async () => {
     const { userId, canChangePassword, canChangeEmail } =
@@ -25,12 +25,20 @@ export const getUserData = async (): Promise<
       })
     }
 
+    const userAccount = await db.query.account.findFirst({
+      where: eq(account.userId, userId),
+      columns: { emailVerified: true },
+    })
+
+    const emailVerified = !!userAccount?.emailVerified
+
     return {
       ok: true,
       data: {
         ...userData,
         canChangeEmail,
         canChangePassword,
+        emailVerified,
       },
     }
   })

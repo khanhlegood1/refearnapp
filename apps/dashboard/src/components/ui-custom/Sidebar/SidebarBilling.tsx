@@ -55,13 +55,25 @@ export const SidebarBilling = ({
         </Button>
       )}
 
-      {plan.type === "PURCHASE" && plan.plan === "PRO" && (
-        <Button asChild className="w-full h-9">
-          <Link href={`/organization/${orgId}/dashboard/pricing`}>
-            Get Ultimate
-          </Link>
-        </Button>
-      )}
+      {plan.type === "PURCHASE" &&
+        plan.plan === "PRO" &&
+        (plan.isAppSumo ? (
+          <Button asChild className="w-full h-9">
+            <a
+              href="https://appsumo.com/products/refearnapp"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Upgrade on AppSumo
+            </a>
+          </Button>
+        ) : (
+          <Button asChild className="w-full h-9">
+            <Link href={`/organization/${orgId}/dashboard/pricing`}>
+              Get Ultimate
+            </Link>
+          </Button>
+        ))}
 
       {(plan.type === "SUBSCRIPTION" || plan.type === "EXPIRED") &&
         (plan.plan === "PRO" || plan.plan === "ULTIMATE") && (

@@ -34,6 +34,7 @@ export default async function DashboardLayout({
   const updateInfo = updateResult?.ok ? updateResult.data : null
   const licenseResult = await getLicense()
   const licenseData = licenseResult?.ok ? licenseResult.data : null
+
   return (
     <SidebarProvider affiliate={false} orgId={orgId}>
       <OrganizationDashboardSidebar
