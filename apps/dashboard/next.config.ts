@@ -61,7 +61,7 @@ const nextConfig: NextConfig = {
     return []
   },
 
-  output: isSelfHosted ? "standalone" : undefined,
+  output: "standalone",
   trailingSlash: false,
 
   experimental: {
