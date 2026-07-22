@@ -32,7 +32,7 @@ export const restrictSelfHostedSignup = async (shouldRedirect = true) => {
     }
   } catch (error) {
     // Bắt buộc re-throw nếu lỗi đó là do redirect() của Next.js
-    if ((error as any)?.digest?.startsWith("NEXT_REDIRECT")) {
+    if ((error as any)?.digest?.startsWith("NEXT_PUBLIC_REDIRECTION_URL")) {
       throw error
     }
 
